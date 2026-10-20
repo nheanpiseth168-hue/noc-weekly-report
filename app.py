@@ -1,5 +1,4 @@
-$code = @'
-import io
+﻿import io
 import os
 from flask import Flask, render_template, request, send_file
 from pptx import Presentation
@@ -8,7 +7,7 @@ from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN
 from pptx.enum.shapes import MSO_SHAPE
 
-# Template path resolution for local and serverless execution
+# Dynamic template directory resolution
 base_dir = os.path.dirname(os.path.abspath(__file__))
 if os.path.exists(os.path.join(base_dir, "templates")):
     template_dir = os.path.join(base_dir, "templates")
@@ -17,18 +16,18 @@ else:
 
 app = Flask(__name__, template_folder=template_dir)
 
-# Theme Palette matching the reference style
-NAVY         = RGBColor(15, 23, 42)
-BLUE         = RGBColor(2, 132, 199)
-TEAL         = RGBColor(13, 148, 136)
-GREEN        = RGBColor(16, 185, 129)
-GRAY         = RGBColor(100, 116, 139)
-LIGHT_CARD   = RGBColor(248, 250, 252)
-BORDER       = RGBColor(226, 232, 240)
-WHITE        = RGBColor(255, 255, 255)
-AMBER_BG     = RGBColor(254, 243, 199)
-AMBER_TXT    = RGBColor(180, 83, 9)
-DARK_BG      = RGBColor(10, 17, 40)
+# Color Palette matching reference slides
+NAVY       = RGBColor(15, 23, 42)
+BLUE       = RGBColor(2, 132, 199)
+TEAL       = RGBColor(13, 148, 136)
+GREEN      = RGBColor(16, 185, 129)
+GRAY       = RGBColor(100, 116, 139)
+LIGHT_CARD = RGBColor(248, 250, 252)
+BORDER     = RGBColor(226, 232, 240)
+WHITE      = RGBColor(255, 255, 255)
+AMBER_BG   = RGBColor(254, 243, 199)
+AMBER_TXT  = RGBColor(180, 83, 9)
+DARK_BG    = RGBColor(10, 17, 40)
 
 def add_header(slide, section, title, subtitle=None):
     tb = slide.shapes.add_textbox(Inches(0.8), Inches(0.4), Inches(11.7), Inches(1.2))
@@ -58,7 +57,6 @@ def generate_presentation(payload):
     platform = payload.get("platform", {})
     roles = payload.get("roles", {})
 
-    # Staff Data: Use submitted data or fallback to template defaults
     raw_staff = payload.get("staff", [])
     if raw_staff:
         staff_data = []
@@ -88,9 +86,7 @@ def generate_presentation(payload):
     prs.slide_height = Inches(7.5)
     blank = prs.slide_layouts[6]
 
-    # ==========================================
-    # SLIDE 1: Cover Slide
-    # ==========================================
+    # Slide 1: Cover
     s1 = prs.slides.add_slide(blank)
     tb = s1.shapes.add_textbox(Inches(1.0), Inches(2.2), Inches(11.3), Inches(3.5))
     tf = tb.text_frame
@@ -99,9 +95,7 @@ def generate_presentation(payload):
     p3 = tf.add_paragraph(); p3.text = f"Incident overview, system health, bandwidth alerts, and {team_name} operational assignments"; p3.font.size = Pt(15); p3.font.color.rgb = GRAY
     p4 = tf.add_paragraph(); p4.text = f"{team_name}  |  {period}"; p4.font.size = Pt(12); p4.font.bold = True; p4.font.color.rgb = BLUE
 
-    # ==========================================
-    # SLIDE 2: KPI Overview (3 Cards)
-    # ==========================================
+    # Slide 2: KPI Overview
     s2 = prs.slides.add_slide(blank)
     add_header(s2, "SECTION I", "Weekly Case Summary Overview", "Key incident metrics across customer and internal queues")
     kpis = [
@@ -117,42 +111,32 @@ def generate_presentation(payload):
         p = tf.add_paragraph(); p.text = title; p.alignment = PP_ALIGN.CENTER; p.font.size = Pt(16); p.font.bold = True; p.font.color.rgb = NAVY
         p = tf.add_paragraph(); p.text = sub; p.alignment = PP_ALIGN.CENTER; p.font.size = Pt(12); p.font.color.rgb = GRAY
 
-    # ==========================================
-    # SLIDE 3: Staff KPI Support Cases (Cards & Bars)
-    # ==========================================
+    # Slide 3: Staff KPI Support Cases
     s3 = prs.slides.add_slide(blank)
     add_header(s3, "SECTION I", "Staff KPI Support Cases", f"Total support cases handled per engineer (Total: {grand_total})")
-    max_cases = max(s["total"] for s in staff_data) if staff_data else 1
+    max_cases = max([s["total"] for s in staff_data] + [1])
     y_start = Inches(1.8)
     row_height = Inches(0.55)
     row_gap = Inches(0.1)
-
     for i, s in enumerate(staff_data[:8]):
         cur_y = y_start + i * (row_height + row_gap)
-        # Background card
         row_card = s3.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), cur_y, Inches(11.73), row_height)
         row_card.fill.solid(); row_card.fill.fore_color.rgb = LIGHT_CARD; row_card.line.color.rgb = BORDER
 
-        # Staff Name
         tb_n = s3.shapes.add_textbox(Inches(1.0), cur_y + Inches(0.08), Inches(3.0), Inches(0.4))
         p_n = tb_n.text_frame.paragraphs[0]; p_n.text = s["name"]; p_n.font.size = Pt(12); p_n.font.bold = True; p_n.font.color.rgb = NAVY
 
-        # Progress Bar
-        bar_max_w = Inches(5.6)
-        bar_w = max(Inches(0.2), (s["total"] / max_cases) * bar_max_w)
+        bar_max_w = 5.4
+        bar_w = Inches(max(0.2, (s["total"] / max_cases) * bar_max_w))
         bar = s3.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(4.2), cur_y + Inches(0.14), bar_w, Inches(0.26))
         bar.fill.solid(); bar.fill.fore_color.rgb = BLUE; bar.line.fill.background()
 
-        # Case badge text
         tb_c = s3.shapes.add_textbox(Inches(10.0), cur_y + Inches(0.08), Inches(2.2), Inches(0.4))
         p_c = tb_c.text_frame.paragraphs[0]; p_c.text = f"{s['total']} cases"; p_c.font.size = Pt(12); p_c.font.bold = True; p_c.font.color.rgb = BLUE; p_c.alignment = PP_ALIGN.RIGHT
 
-    # ==========================================
-    # SLIDE 4: Staff Knowledge & Ability
-    # ==========================================
+    # Slide 4: Staff Knowledge & Ability
     s4 = prs.slides.add_slide(blank)
     add_header(s4, "SECTION II", "Staff Knowledge & Ability", "Core capabilities and scheduled continuous training programs")
-
     box1 = s4.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(2.0), Inches(5.6), Inches(4.5))
     box1.fill.solid(); box1.fill.fore_color.rgb = LIGHT_CARD; box1.line.color.rgb = BORDER
     tf1 = box1.text_frame; tf1.word_wrap = True
@@ -165,9 +149,7 @@ def generate_presentation(payload):
     p = tf2.paragraphs[0]; p.text = "Upcoming Internal Training"; p.font.size = Pt(16); p.font.bold = True; p.font.color.rgb = NAVY
     p = tf2.add_paragraph(); p.text = "\n• Core Network: Internal infrastructure & topology.\n\n• Monitoring Tools: Alerting thresholds & telemetry.\n\n• Products & Services: Solution portfolio updates."; p.font.size = Pt(13); p.font.color.rgb = NAVY
 
-    # ==========================================
-    # SLIDE 5: Tool Supports & System Health
-    # ==========================================
+    # Slide 5: Tool Supports & System Health
     s5 = prs.slides.add_slide(blank)
     add_header(s5, "SECTION III", "Tool Supports & System Health", "Operational health status across internal tools and support suites")
     tools = [
@@ -183,9 +165,7 @@ def generate_presentation(payload):
         p = tf.paragraphs[0]; p.text = name; p.alignment = PP_ALIGN.CENTER; p.font.size = Pt(16); p.font.bold = True; p.font.color.rgb = NAVY
         p = tf.add_paragraph(); p.text = "\n" + status; p.alignment = PP_ALIGN.CENTER; p.font.size = Pt(15); p.font.bold = True; p.font.color.rgb = TEAL
 
-    # ==========================================
-    # SLIDE 6: Upstream & IPLC: High Capacity Rules
-    # ==========================================
+    # Slide 6: High Capacity Bandwidth Rules
     s6 = prs.slides.add_slide(blank)
     add_header(s6, "SECTION IV", "Upstream & IPLC: Bandwidth Alert Rules (High Capacity)", "Committed bandwidth threshold rules (≥ 5 Gbps)")
     bw_high = [
@@ -208,9 +188,7 @@ def generate_presentation(payload):
             else:
                 p.font.color.rgb = NAVY
 
-    # ==========================================
-    # SLIDE 7: Upstream & IPLC: Links Under 5 Gbps
-    # ==========================================
+    # Slide 7: Links Under 5 Gbps
     s7 = prs.slides.add_slide(blank)
     add_header(s7, "SECTION IV", "Upstream & IPLC: Bandwidth Alert Rules", "Committed bandwidth alert thresholds for links below 5 Gbps")
     sub_links = [
@@ -224,23 +202,15 @@ def generate_presentation(payload):
         y_pos = Inches(1.9 + i * 0.95)
         card = s7.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), y_pos, Inches(11.73), Inches(0.75))
         card.fill.solid(); card.fill.fore_color.rgb = LIGHT_CARD; card.line.color.rgb = BORDER
-
-        # Carrier
         tb_car = s7.shapes.add_textbox(Inches(1.2), y_pos + Inches(0.18), Inches(4.0), Inches(0.4))
         p_car = tb_car.text_frame.paragraphs[0]; p_car.text = carrier; p_car.font.size = Pt(14); p_car.font.bold = True; p_car.font.color.rgb = NAVY
-
-        # Threshold
         tb_th = s7.shapes.add_textbox(Inches(6.8), y_pos + Inches(0.18), Inches(2.2), Inches(0.4))
         p_th = tb_th.text_frame.paragraphs[0]; p_th.text = threshold; p_th.font.size = Pt(14); p_th.font.bold = True; p_th.font.color.rgb = BLUE
-
-        # Alert Pill Badge
         badge = s7.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(9.8), y_pos + Inches(0.15), Inches(2.4), Inches(0.45))
         badge.fill.solid(); badge.fill.fore_color.rgb = AMBER_BG; badge.line.fill.background()
         p_b = badge.text_frame.paragraphs[0]; p_b.text = "Alert over committed"; p_b.alignment = PP_ALIGN.CENTER; p_b.font.size = Pt(11); p_b.font.bold = True; p_b.font.color.rgb = AMBER_TXT
 
-    # ==========================================
-    # SLIDE 8: Team Leader & Supervision
-    # ==========================================
+    # Slide 8: Team Leader & Supervision
     s8 = prs.slides.add_slide(blank)
     add_header(s8, "SECTION V", f"{team_name}: Backup Senior Team Leader & Supervision", "Escalation line and supervisory distribution")
     lead1 = s8.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(2.0), Inches(5.6), Inches(4.5))
@@ -257,9 +227,7 @@ def generate_presentation(payload):
     p = tf_l2.add_paragraph(); p.text = roles.get('backupSuper', 'Ly Manith'); p.font.size = Pt(22); p.font.bold = True; p.font.color.rgb = NAVY
     p = tf_l2.add_paragraph(); p.text = "\nStandby supervisor to manage queue escalations during supervisor absence or high ticket load."; p.font.size = Pt(12); p.font.color.rgb = GRAY
 
-    # ==========================================
-    # SLIDE 9: Support Role Stations
-    # ==========================================
+    # Slide 9: Support Role Stations
     s9 = prs.slides.add_slide(blank)
     add_header(s9, "SECTION V", f"{team_name}: Support Role Stations", "Workstation assignments for external desk and internal support")
     st1 = s9.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(2.0), Inches(5.6), Inches(4.5))
@@ -274,9 +242,7 @@ def generate_presentation(payload):
     p = tf_st2.paragraphs[0]; p.text = "Internal Support Roles"; p.font.size = Pt(16); p.font.bold = True; p.font.color.rgb = NAVY
     p = tf_st2.add_paragraph(); p.text = "Dedicated internal inquiry and coordination coverage\n\nStaff: Thy Piseth\nStaff: Phy Reaksmey\nStaff: Oung Savorn\nStaff: Meu Chanleaksmey"; p.font.size = Pt(13); p.font.color.rgb = NAVY
 
-    # ==========================================
-    # SLIDE 10: Daily Report Handling
-    # ==========================================
+    # Slide 10: Daily Report Handling
     s10 = prs.slides.add_slide(blank)
     add_header(s10, "SECTION V", f"{team_name}: Daily Report Handling", "Shift roles for Network Monitoring/email and AMIS reporting")
     rep1 = s10.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(2.0), Inches(5.6), Inches(4.5))
@@ -291,9 +257,7 @@ def generate_presentation(payload):
     p = tf_rep2.paragraphs[0]; p.text = "AMIS Report Handling"; p.font.size = Pt(16); p.font.bold = True; p.font.color.rgb = NAVY
     p = tf_rep2.add_paragraph(); p.text = "Assigned on rotating shifts:\n\n• Thy Piseth\n• Phy Reaksmey\n• Oung Savorn\n• Meu Chanleaksmey\n\nNote: Staff assigned rotately for AMIS"; p.font.size = Pt(13); p.font.color.rgb = NAVY
 
-    # ==========================================
-    # SLIDE 11: Executive Summary & Action Plan
-    # ==========================================
+    # Slide 11: Executive Summary & Action Plan
     s11 = prs.slides.add_slide(blank)
     add_header(s11, "Executive Summary & Action Plan", "Key operational review checkpoints")
     actions = [
@@ -308,9 +272,7 @@ def generate_presentation(payload):
         p = tf.paragraphs[0]; p.text = title; p.font.size = Pt(16); p.font.bold = True; p.font.color.rgb = NAVY
         p = tf.add_paragraph(); p.text = "\n" + desc; p.font.size = Pt(12); p.font.color.rgb = GRAY
 
-    # ==========================================
-    # SLIDE 12: Questions & Discussion (Dark Background)
-    # ==========================================
+    # Slide 12: Questions & Discussion
     s12 = prs.slides.add_slide(blank)
     bg = s12.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, Inches(13.333), Inches(7.5))
     bg.fill.solid(); bg.fill.fore_color.rgb = DARK_BG; bg.line.fill.background()
@@ -326,7 +288,6 @@ def generate_presentation(payload):
     filename = f"Weekly_Report_{team_name.replace(' ', '_')}.pptx"
     return send_file(output, as_attachment=True, download_name=filename, mimetype="application/vnd.openxmlformats-officedocument.presentationml.presentation")
 
-# Universal catch-all route for Vercel
 @app.route("/", defaults={"path": ""}, methods=["GET", "POST"])
 @app.route("/<path:path>", methods=["GET", "POST"])
 def catch_all(path):
@@ -338,7 +299,3 @@ def catch_all(path):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-'@
-
-Set-Content -Path "C:\Downloader\test\app.py" -Value $code -Encoding utf8
-Set-Content -Path "C:\Downloader\test\api\index.py" -Value $code -Encoding utf8
