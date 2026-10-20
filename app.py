@@ -16,7 +16,7 @@ else:
 
 app = Flask(__name__, template_folder=template_dir)
 
-# Theme Palette matching reference style
+# Theme Palette (High-contrast typography for white backgrounds)
 NAVY       = RGBColor(15, 23, 42)
 BLUE       = RGBColor(2, 132, 199)
 TEAL       = RGBColor(13, 148, 136)
@@ -27,7 +27,6 @@ BORDER     = RGBColor(226, 232, 240)
 WHITE      = RGBColor(255, 255, 255)
 AMBER_BG   = RGBColor(254, 243, 199)
 AMBER_TXT  = RGBColor(180, 83, 9)
-DARK_BG    = RGBColor(7, 14, 30)
 
 CLR_30M   = RGBColor(16, 185, 129)
 CLR_1H    = RGBColor(245, 158, 11)
@@ -61,7 +60,6 @@ def add_header(slide, section, title, subtitle=None, tag=None):
         p_t = tag_box.text_frame.paragraphs[0]; p_t.text = tag; p_t.alignment = PP_ALIGN.CENTER; p_t.font.size = Pt(10.5); p_t.font.bold = True; p_t.font.color.rgb = BLUE
 
 def generate_presentation(payload):
-    # Pure dynamic data caught from frontend inputs
     team_name = payload.get("teamName") or "Team 1"
     assigned_team = payload.get("assignedTeam") or "Team Alpha"
     period = payload.get("reportPeriod") or "Week 42 (Current Shift)"
@@ -69,7 +67,6 @@ def generate_presentation(payload):
     platform = payload.get("platform") or {}
     roles = payload.get("roles") or {}
 
-    # Staff list from user input
     raw_staff = payload.get("staff") or []
     processed_staff = []
     t30 = t1 = t2 = t3 = tover = 0
@@ -92,13 +89,11 @@ def generate_presentation(payload):
             "total": total
         })
 
-    # Sort descending by total resolved cases
     processed_staff.sort(key=lambda x: x["total"], reverse=True)
     grand_total = sum(s["total"] for s in processed_staff) if processed_staff else 0
     sla_rate = f"{(t30 / grand_total * 100):.1f}%" if grand_total > 0 else "0.0%"
     active_count = len(processed_staff)
 
-    # Dynamic role assignments from frontend
     main_super = roles.get("mainSuper") or "MAK BUN LEANG"
     backup_super = roles.get("backupSuper") or "POV PUNLORK"
     hq01 = roles.get("hq01") or "MAK BUN LEANG"
@@ -164,7 +159,7 @@ def generate_presentation(payload):
     p_ft2.font.size = Pt(11); p_ft2.font.color.rgb = NAVY
 
     # ==========================================
-    # SLIDE 3: Staff KPI Support Cases (Page 3)
+    # SLIDE 3: Staff KPI Support Cases
     # ==========================================
     s3 = prs.slides.add_slide(blank)
     add_header(s3, "SECTION I • Individual Throughput", "Staff KPI Support Cases", f"Total Handled: {grand_total} Cases", f"{team_name} Support Roster")
@@ -193,7 +188,7 @@ def generate_presentation(payload):
         p_c = tb_c.text_frame.paragraphs[0]; p_c.text = f"{s['total']} cases"; p_c.font.size = Pt(12); p_c.font.bold = True; p_c.font.color.rgb = BLUE; p_c.alignment = PP_ALIGN.RIGHT
 
     # ==========================================
-    # SLIDE 4: Resolution Turnaround Time (Page 4)
+    # SLIDE 4: Resolution Turnaround Time
     # ==========================================
     s4 = prs.slides.add_slide(blank)
     add_header(s4, "SECTION I • Resolution Turnaround Time", "Resolution Time Breakdown by Engineer", None)
@@ -232,7 +227,7 @@ def generate_presentation(payload):
     p_ft.font.size = Pt(10.5); p_ft.font.color.rgb = GRAY; p_ft.alignment = PP_ALIGN.CENTER
 
     # ==========================================
-    # SLIDE 5: Staff Knowledge & Ability (Page 5)
+    # SLIDE 5: Staff Knowledge & Ability
     # ==========================================
     s5 = prs.slides.add_slide(blank)
     add_header(s5, "SECTION II • Continuous Training", "Staff Knowledge & Ability", "Core operational capabilities and continuous technical upskilling roadmap", "Scheduled Sessions Active")
@@ -249,7 +244,7 @@ def generate_presentation(payload):
     p = tf2.add_paragraph(); p.text = "\n• Core Network: Internal infrastructure & topology.\n\n• Monitoring Tools: Alerting thresholds & telemetry.\n\n• Products & Services: Solution portfolio updates."; p.font.size = Pt(13); p.font.color.rgb = NAVY
 
     # ==========================================
-    # SLIDE 6: Tool Supports & System Health (Page 6)
+    # SLIDE 6: Tool Supports & System Health
     # ==========================================
     s6 = prs.slides.add_slide(blank)
     add_header(s6, "SECTION III • Infrastructure Health", "Tool Supports & System Health", "Operational health status across internal tools, billing pipelines, and support suites", "Weekly Uptime: 100%")
@@ -338,7 +333,7 @@ def generate_presentation(payload):
     p_ft8.font.size = Pt(10.5); p_ft8.font.color.rgb = GRAY; p_ft8.alignment = PP_ALIGN.CENTER
 
     # ==========================================
-    # SLIDE 9: Leadership & Supervision (Page 9)
+    # SLIDE 9: Leadership & Supervision
     # ==========================================
     s9 = prs.slides.add_slide(blank)
     add_header(s9, "SECTION V • Leadership & Escalation", f"{team_name}: Senior Team Leader & Supervision", "Escalation path and operational supervision command structure", "24/7 Escalation Active")
@@ -359,7 +354,7 @@ def generate_presentation(payload):
     p = tf_l2.add_paragraph(); p.text = "\nStandby supervisor to manage queue escalations during supervisor absence or high ticket load."; p.font.size = Pt(12); p.font.color.rgb = GRAY
 
     # ==========================================
-    # SLIDE 10: Dispatch Stations & Reports (Page 10)
+    # SLIDE 10: Dispatch Stations & Reports
     # ==========================================
     s10 = prs.slides.add_slide(blank)
     add_header(s10, "SECTION V • Dispatch Stations & Roster", f"{team_name}: Support Role Stations & Daily Reports", "Workstation assignments and daily status reporting distribution", "Daily Rotation Active")
@@ -405,24 +400,50 @@ def generate_presentation(payload):
     p_ft11.font.size = Pt(11); p_ft11.font.color.rgb = GRAY; p_ft11.alignment = PP_ALIGN.CENTER
 
     # ==========================================
-    # SLIDE 12: Questions & Discussion
+    # SLIDE 12: Questions & Discussion (Fixed White Theme)
     # ==========================================
     s12 = prs.slides.add_slide(blank)
-    bg = s12.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, Inches(13.333), Inches(7.5))
-    bg.fill.solid(); bg.fill.fore_color.rgb = DARK_BG; bg.line.fill.background()
 
-    tb_q = s12.shapes.add_textbox(Inches(1.0), Inches(2.2), Inches(11.333), Inches(2.0))
-    tf_q = tb_q.text_frame; tf_q.word_wrap = True
-    p = tf_q.paragraphs[0]; p.text = "Questions & Discussion"; p.alignment = PP_ALIGN.CENTER; p.font.size = Pt(38); p.font.bold = True; p.font.color.rgb = WHITE
-    p = tf_q.add_paragraph(); p.text = f"Weekly Case Summary Report • Operations & Network Support {team_name}"; p.alignment = PP_ALIGN.CENTER; p.font.size = Pt(15); p.font.color.rgb = RGBColor(148, 163, 184)
+    # Title & Subtitle in High-Contrast Navy & Gray
+    tb_q = s12.shapes.add_textbox(Inches(1.0), Inches(2.0), Inches(11.333), Inches(2.2))
+    tf_q = tb_q.text_frame
+    tf_q.word_wrap = True
+    p = tf_q.paragraphs[0]
+    p.text = "Questions & Discussion"
+    p.alignment = PP_ALIGN.CENTER
+    p.font.size = Pt(40)
+    p.font.bold = True
+    p.font.color.rgb = NAVY
+    
+    p_sub = tf_q.add_paragraph()
+    p_sub.text = f"Weekly Case Summary Report • Operations & Network Support {team_name}"
+    p_sub.alignment = PP_ALIGN.CENTER
+    p_sub.font.size = Pt(15)
+    p_sub.font.color.rgb = GRAY
 
-    q_data = [("SUPERVISOR LEAD", main_super), ("BACKUP LEAD", backup_super), ("ASSIGNED TEAM", f"{assigned_team} ({active_count} Engineers)")]
+    # 3 Summary Cards with High-Contrast Navy & Blue Text
+    q_data = [
+        ("SUPERVISOR LEAD", main_super),
+        ("BACKUP LEAD", backup_super),
+        ("ASSIGNED TEAM", f"{assigned_team} ({active_count} Engineers)")
+    ]
     for i, (lbl, val) in enumerate(q_data):
-        box_q = s12.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(1.2 + i * 3.8), Inches(5.2), Inches(3.4), Inches(1.1))
-        box_q.fill.solid(); box_q.fill.fore_color.rgb = RGBColor(15, 23, 42); box_q.line.color.rgb = RGBColor(30, 41, 59)
+        box_q = s12.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(1.2 + i * 3.8), Inches(4.8), Inches(3.4), Inches(1.2))
+        box_q.fill.solid(); box_q.fill.fore_color.rgb = LIGHT_CARD; box_q.line.color.rgb = BORDER
         tf_bq = box_q.text_frame
-        p_bq1 = tf_bq.paragraphs[0]; p_bq1.text = lbl; p_bq1.alignment = PP_ALIGN.CENTER; p_bq1.font.size = Pt(10); p_bq1.font.bold = True; p_bq1.font.color.rgb = BLUE
-        p_bq2 = tf_bq.add_paragraph(); p_bq2.text = val; p_bq2.alignment = PP_ALIGN.CENTER; p_bq2.font.size = Pt(13); p_bq2.font.bold = True; p_bq2.font.color.rgb = WHITE
+        tf_bq.word_wrap = True
+        p_bq1 = tf_bq.paragraphs[0]
+        p_bq1.text = lbl
+        p_bq1.alignment = PP_ALIGN.CENTER
+        p_bq1.font.size = Pt(10.5)
+        p_bq1.font.bold = True
+        p_bq1.font.color.rgb = BLUE
+        p_bq2 = tf_bq.add_paragraph()
+        p_bq2.text = val
+        p_bq2.alignment = PP_ALIGN.CENTER
+        p_bq2.font.size = Pt(14)
+        p_bq2.font.bold = True
+        p_bq2.font.color.rgb = NAVY
 
     output = io.BytesIO()
     prs.save(output)
