@@ -7,7 +7,7 @@ from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN
 from pptx.enum.shapes import MSO_SHAPE
 
-# Dynamic template resolution (works from root or api/ subfolder)
+# Dynamic template directory resolution (handles root and serverless execution)
 base_dir = os.path.dirname(os.path.abspath(__file__))
 if os.path.exists(os.path.join(base_dir, "templates")):
     template_dir = os.path.join(base_dir, "templates")
@@ -63,19 +63,24 @@ def generate_presentation(payload):
     prs.slide_width = Inches(13.333); prs.slide_height = Inches(7.5)
     blank = prs.slide_layouts[6]
 
-    # Slide 1: Cover
+    # --- Slide 1: Cover ---
     s1 = prs.slides.add_slide(blank)
     tb = s1.shapes.add_textbox(Inches(1.0), Inches(2.2), Inches(11.3), Inches(3.5))
     tf = tb.text_frame
     p = tf.paragraphs[0]; p.text = "OPERATIONS & NETWORK SUPPORT"; p.font.size = Pt(13); p.font.bold = True; p.font.color.rgb = BLUE
     p = tf.add_paragraph(); p.text = "Weekly Report & Teamwork Roles"; p.font.size = Pt(32); p.font.bold = True; p.font.color.rgb = NAVY
-    p = tf.add_paragraph(); p.text = f"Incident overview, system health, bandwidth alerts, and {team_name} operational assignments"; p.font.size = Pt(15); p.font.color.rgb = GRAY
+    p = tf.add_paragraph(); p.text = f"Incident overview, system health, and {team_name} operational assignments"; p.font.size = Pt(15); p.font.color.rgb = GRAY
     p = tf.add_paragraph(); p.text = f"{team_name}  |  {period}"; p.font.size = Pt(12); p.font.bold = True; p.font.color.rgb = BLUE
 
-    # Slide 2: KPI Overview
+    # --- Slide 2: KPI Overview ---
     s2 = prs.slides.add_slide(blank)
     add_header(s2, "SECTION I", "Weekly Case Summary Overview", "Key incident metrics across customer and internal queues")
-    kpis = [(str(grand_total), "Total Cases Handled", "Weekly operational volume"), (critical_incidents, "Critical Incidents", "Zero service-impacting severity"), (str(len(processed_staff)), "Active Engineers", "Full team dispatch coverage"), (sla_rate, "Sub-30m SLA Rate", f"{t30} of {grand_total} resolved under 30 mins")]
+    kpis = [
+        (str(grand_total), "Total Cases Handled", "Weekly operational volume"),
+        (critical_incidents, "Critical Incidents", "Zero service-impacting severity"),
+        (str(len(processed_staff)), "Active Engineers", "Full team dispatch coverage"),
+        (sla_rate, "Sub-30m SLA Rate", f"{t30} of {grand_total} resolved under 30 mins")
+    ]
     for i, (val, title, sub) in enumerate(kpis):
         box = s2.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8 + i * 2.95), Inches(2.2), Inches(2.8), Inches(3.5))
         box.fill.solid(); box.fill.fore_color.rgb = LIGHT; box.line.color.rgb = BORDER
@@ -84,7 +89,7 @@ def generate_presentation(payload):
         p = tf.add_paragraph(); p.text = title; p.alignment = PP_ALIGN.CENTER; p.font.size = Pt(14); p.font.bold = True; p.font.color.rgb = NAVY
         p = tf.add_paragraph(); p.text = sub; p.alignment = PP_ALIGN.CENTER; p.font.size = Pt(11); p.font.color.rgb = GRAY
 
-    # Slide 3: KPI Table
+    # --- Slide 3: KPI Table ---
     s3 = prs.slides.add_slide(blank)
     add_header(s3, "SECTION I", "Staff KPI: Support Cases Handled", f"Total support cases handled per engineer (Total: {grand_total} cases)")
     rows = len(processed_staff) + 2
@@ -105,7 +110,7 @@ def generate_presentation(payload):
         p = c.text_frame.paragraphs[0]; p.font.bold = True; p.font.size = Pt(11); p.font.color.rgb = NAVY
         if c_idx > 0: p.alignment = PP_ALIGN.CENTER
 
-    # Slide 4: Chart
+    # --- Slide 4: Chart ---
     s4 = prs.slides.add_slide(blank)
     add_header(s4, "SECTION I  •  Resolution Turnaround Time", "Resolution Time Breakdown by Engineer", None)
     lg_x = Inches(8.3)
@@ -139,23 +144,54 @@ def generate_presentation(payload):
     p_ft.text = f"Fast Turnaround: {t30} cases closed <30m. Complex escalations (>3h) concentrated under MAK BUN LEANG & I CHHENGKHEANG.   {sla_rate} SLA Sub-30m"
     p_ft.font.size = Pt(10); p_ft.font.color.rgb = GRAY; p_ft.alignment = PP_ALIGN.CENTER
 
-    # Slide 5: Health
+    # --- Slide 5: Staff Knowledge & Ability ---
     s5 = prs.slides.add_slide(blank)
-    add_header(s5, "SECTION III", "Tool Supports & System Health", "Operational health status across internal tools and support suites")
-    tools = [("Portal Support", platform.get("portal", "Helpful & Responsive"), "No delays reported. Queue handling responsive."), ("AMIS Platform", platform.get("amis", "No Issue"), "Customer database and records synchronized normally."), ("Billing System", platform.get("billing", "No Issue"), "Customer billing and account payments operating normally."), ("Request Tracker", platform.get("rt", "No Issue"), "Internal ticketing queue operating without latency.")]
+    add_header(s5, "SECTION II", "Staff Knowledge & Ability", "Team operational capabilities and continuous technical upskilling roadmap")
+    box_sk1 = s5.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(1.9), Inches(5.6), Inches(4.5))
+    box_sk1.fill.solid(); box_sk1.fill.fore_color.rgb = LIGHT; box_sk1.line.color.rgb = BORDER
+    tf_sk1 = box_sk1.text_frame; tf_sk1.word_wrap = True
+    p = tf_sk1.paragraphs[0]; p.text = "Support Competencies"; p.font.size = Pt(15); p.font.bold = True; p.font.color.rgb = NAVY
+    p = tf_sk1.add_paragraph()
+    p.text = "• Portal Support: Responsive ticket handling and client escalation.\n• AMIS Platform: Customer database lookup and record sync.\n• Billing System: Invoice verification and payment confirmations.\n• RT Ticketing: Internal escalation and issue tracking."
+    p.font.size = Pt(12); p.font.color.rgb = NAVY
+
+    box_sk2 = s5.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(6.9), Inches(1.9), Inches(5.6), Inches(4.5))
+    box_sk2.fill.solid(); box_sk2.fill.fore_color.rgb = LIGHT; box_sk2.line.color.rgb = BORDER
+    tf_sk2 = box_sk2.text_frame; tf_sk2.word_wrap = True
+    p = tf_sk2.paragraphs[0]; p.text = "Upcoming Internal Training"; p.font.size = Pt(15); p.font.bold = True; p.font.color.rgb = NAVY
+    p = tf_sk2.add_paragraph()
+    p.text = "• Core Network Topology & Upstream Pathing\n• BGP Alerting & Telemetry Threshold Logic\n• Bandwidth Optimization & Traffic Routing\n• Incident Post-Mortem & Escalation Protocols"
+    p.font.size = Pt(12); p.font.color.rgb = NAVY
+
+    # --- Slide 6: Tool Supports & System Health ---
+    s6 = prs.slides.add_slide(blank)
+    add_header(s6, "SECTION III", "Tool Supports & System Health", "Operational health status across internal tools and support suites")
+    tools = [
+        ("Portal Support", platform.get("portal", "Helpful & Responsive"), "No delays reported. Queue handling responsive."),
+        ("AMIS Platform", platform.get("amis", "No Issue"), "Customer database and records synchronized normally."),
+        ("Billing System", platform.get("billing", "No Issue"), "Customer billing and account payments operating normally."),
+        ("Request Tracker", platform.get("rt", "No Issue"), "Internal ticketing queue operating without latency.")
+    ]
     for i, (name, status, desc) in enumerate(tools):
-        box = s5.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8 + i * 2.95), Inches(2.2), Inches(2.8), Inches(3.5))
+        box = s6.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8 + i * 2.95), Inches(2.2), Inches(2.8), Inches(3.5))
         box.fill.solid(); box.fill.fore_color.rgb = LIGHT; box.line.color.rgb = BORDER
         tf = box.text_frame; tf.word_wrap = True
         p = tf.paragraphs[0]; p.text = name; p.alignment = PP_ALIGN.CENTER; p.font.size = Pt(15); p.font.bold = True; p.font.color.rgb = NAVY
         p = tf.add_paragraph(); p.text = status; p.alignment = PP_ALIGN.CENTER; p.font.size = Pt(14); p.font.bold = True; p.font.color.rgb = TEAL
         p = tf.add_paragraph(); p.text = desc; p.alignment = PP_ALIGN.CENTER; p.font.size = Pt(11); p.font.color.rgb = GRAY
 
-    # Slide 6: BW Alerts
-    s6 = prs.slides.add_slide(blank)
-    add_header(s6, "SECTION IV", "Upstream & IPLC: Bandwidth Alert Rules (High Capacity)", "Committed bandwidth threshold rules (≥ 5 Gbps)")
-    bw_high = [["Carrier / Circuit", "Link Type", "Alert Trigger Threshold", "Trigger Logic"], ["IPLC Viettel", "IPLC Circuit", "Traffic over 20 Gbps", "Alert Over Committed Bandwidth"], ["VNPT", "Global Upstream", "Traffic over 20 Gbps", "Alert Over Committed Bandwidth"], ["PCCW", "Global Upstream", "Traffic over 10 Gbps", "Alert Over Committed Bandwidth"], ["Cogent", "Global Upstream", "Traffic over 10 Gbps", "Alert Over Committed Bandwidth"], ["Viettel-BVT / Viettel-CHT", "Global Upstream", "Traffic over 5 Gbps each", "Alert Over Committed Bandwidth"]]
-    tbl_high = s6.shapes.add_table(6, 4, Inches(0.8), Inches(1.9), Inches(11.7), Inches(3.8)).table
+    # --- Slide 7: Upstream & IPLC: High Capacity Rules ---
+    s7 = prs.slides.add_slide(blank)
+    add_header(s7, "SECTION IV", "Upstream & IPLC: Bandwidth Alert Rules (High Capacity)", "Committed bandwidth threshold rules (≥ 5 Gbps)")
+    bw_high = [
+        ["Carrier / Circuit", "Link Type", "Alert Trigger Threshold", "Trigger Logic"],
+        ["IPLC Viettel", "IPLC Circuit", "Traffic over 20 Gbps", "Alert Over Committed Bandwidth"],
+        ["VNPT", "Global Upstream", "Traffic over 20 Gbps", "Alert Over Committed Bandwidth"],
+        ["PCCW", "Global Upstream", "Traffic over 10 Gbps", "Alert Over Committed Bandwidth"],
+        ["Cogent", "Global Upstream", "Traffic over 10 Gbps", "Alert Over Committed Bandwidth"],
+        ["Viettel-BVT / Viettel-CHT", "Global Upstream", "Traffic over 5 Gbps each", "Alert Over Committed Bandwidth"]
+    ]
+    tbl_high = s7.shapes.add_table(6, 4, Inches(0.8), Inches(1.9), Inches(11.7), Inches(3.8)).table
     for i, w in enumerate([Inches(3.2), Inches(2.5), Inches(3.0), Inches(3.0)]): tbl_high.columns[i].width = w
     for r_idx, row in enumerate(bw_high):
         for c_idx, val in enumerate(row):
@@ -163,23 +199,22 @@ def generate_presentation(payload):
             if r_idx == 0: cell.fill.solid(); cell.fill.fore_color.rgb = BLUE; p.font.bold = True; p.font.color.rgb = WHITE
             else: p.font.color.rgb = NAVY
 
-    # Slide 7: Roles
-    s7 = prs.slides.add_slide(blank)
-    add_header(s7, "SECTION V", f"{team_name}: Supervision & Workstation Assignments", "Shift roles, external desk seating, and internal inquiry coverage")
-    box1 = s7.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(1.9), Inches(5.6), Inches(4.5))
-    box1.fill.solid(); box1.fill.fore_color.rgb = LIGHT; box1.line.color.rgb = BORDER
-    tf1 = box1.text_frame; tf1.word_wrap = True
-    p = tf1.paragraphs[0]; p.text = "External Support & Supervision"; p.font.size = Pt(15); p.font.bold = True; p.font.color.rgb = NAVY
-    p = tf1.add_paragraph()
-    p.text = f"• Main Supervisor: {roles.get('mainSuper', '')}\n• Backup Supervisor: {roles.get('backupSuper', '')}\n• {roles.get('hqFixed', '')}\n• HQ04 Station (Daily Rotation):\n   {roles.get('hq04', '')}"
-    p.font.size = Pt(12); p.font.color.rgb = NAVY
-    box2 = s7.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(6.9), Inches(1.9), Inches(5.6), Inches(4.5))
-    box2.fill.solid(); box2.fill.fore_color.rgb = LIGHT; box2.line.color.rgb = BORDER
-    tf2 = box2.text_frame; tf2.word_wrap = True
-    p = tf2.paragraphs[0]; p.text = "Internal Roles & Daily Reporting"; p.font.size = Pt(15); p.font.bold = True; p.font.color.rgb = NAVY
-    p = tf2.add_paragraph()
-    p.text = f"• Dedicated Internal Support:\n   {roles.get('internal', '')}\n\n• Network Monitoring & Email Shift:\n   {roles.get('monitoring', '')}\n\n• AMIS Daily Report Handling (Rotating):\n   {roles.get('amisReport', '')}"
-    p.font.size = Pt(12); p.font.color.rgb = NAVY
+    # --- Slide 8: Senior Team Leader & Supervision ---
+    s8 = prs.slides.add_slide(blank)
+    add_header(s8, "SECTION V", f"{team_name}: Senior Team Leader & Supervision", "Escalation path and operational supervision command structure")
+    box_lead1 = s8.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(1.9), Inches(5.6), Inches(4.5))
+    box_lead1.fill.solid(); box_lead1.fill.fore_color.rgb = LIGHT; box_lead1.line.color.rgb = BORDER
+    tf_l1 = box_lead1.text_frame; tf_l1.word_wrap = True
+    p = tf_l1.paragraphs[0]; p.text = "Main Supervisor"; p.font.size = Pt(16); p.font.bold = True; p.font.color.rgb = BLUE
+    p = tf_l1.add_paragraph(); p.text = roles.get('mainSuper', 'MAK BUN LEANG'); p.font.size = Pt(20); p.font.bold = True; p.font.color.rgb = NAVY
+    p = tf_l1.add_paragraph(); p.text = "Primary operational lead for shift supervision, queue balance, and primary escalations."; p.font.size = Pt(12); p.font.color.rgb = GRAY
+
+    box_lead2 = s8.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(6.9), Inches(1.9), Inches(5.6), Inches(4.5))
+    box_lead2.fill.solid(); box_lead2.fill.fore_color.rgb = LIGHT; box_lead2.line.color.rgb = BORDER
+    tf_l2 = box_lead2.text_frame; tf_l2.word_wrap = True
+    p = tf_l2.paragraphs[0]; p.text = "Backup Supervisor"; p.font.size = Pt(16); p.font.bold = True; p.font.color.rgb = BLUE
+    p = tf_l2.add_paragraph(); p.text = roles.get('backupSuper', 'POV PUNLORK'); p.font.size = Pt(20); p.font.bold = True; p.font.color.rgb = NAVY
+    p = tf_l2.add_paragraph(); p.text = "Secondary supervision to manage queue escalations during supervisor absence or high-load intervals."; p.font.size = Pt(12); p.font.color.rgb = GRAY
 
     output = io.BytesIO()
     prs.save(output)
@@ -187,7 +222,7 @@ def generate_presentation(payload):
     filename = f"Weekly_Report_{team_name.replace(' ', '_')}.pptx"
     return send_file(output, as_attachment=True, download_name=filename, mimetype="application/vnd.openxmlformats-officedocument.presentationml.presentation")
 
-# Universal Catch-All Route (Handles both direct visits and Vercel rewrites)
+# Universal route for Vercel serverless execution
 @app.route("/", defaults={"path": ""}, methods=["GET", "POST"])
 @app.route("/<path:path>", methods=["GET", "POST"])
 def catch_all(path):
@@ -197,4 +232,5 @@ def catch_all(path):
     return render_template("index.html")
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
