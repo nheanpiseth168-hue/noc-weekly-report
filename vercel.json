@@ -1,10 +1,10 @@
-﻿{
+{
   "functions": {
     "api/index.py": {
       "includeFiles": "templates/**"
     }
   },
   "rewrites": [
-    { "source": "/(.*)", "destination": "/api/index" }
+    { "source": "/(.*)", "destination": "/api/index.py" }
   ]
 }
