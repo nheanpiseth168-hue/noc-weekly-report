@@ -35,6 +35,15 @@ CLR_2H    = RGBColor(249, 115, 22)
 CLR_3H    = RGBColor(239, 68, 68)
 CLR_OVER3 = RGBColor(112, 14, 14)
 
+def set_run_font(paragraph, size=12, bold=False, color=RGBColor(0, 0, 0)):
+    paragraph.font.size = Pt(size)
+    paragraph.font.bold = bold
+    paragraph.font.color.rgb = color
+    for run in paragraph.runs:
+        run.font.size = Pt(size)
+        run.font.bold = bold
+        run.font.color.rgb = color
+
 def add_header(slide, section, title, subtitle=None, tag=None):
     tb = slide.shapes.add_textbox(Inches(0.8), Inches(0.4), Inches(11.73), Inches(1.2))
     tf = tb.text_frame
@@ -42,23 +51,19 @@ def add_header(slide, section, title, subtitle=None, tag=None):
     tf.margin_left = tf.margin_top = tf.margin_right = tf.margin_bottom = 0
     p1 = tf.paragraphs[0]
     p1.text = section.upper()
-    p1.font.size = Pt(11)
-    p1.font.bold = True
-    p1.font.color.rgb = BLUE
+    set_run_font(p1, size=11, bold=True, color=BLUE)
     p2 = tf.add_paragraph()
     p2.text = title
-    p2.font.size = Pt(22)
-    p2.font.bold = True
-    p2.font.color.rgb = NAVY
+    set_run_font(p2, size=22, bold=True, color=NAVY)
     if subtitle:
         p3 = tf.add_paragraph()
         p3.text = subtitle
-        p3.font.size = Pt(12)
-        p3.font.color.rgb = GRAY
+        set_run_font(p3, size=12, bold=False, color=GRAY)
     if tag:
         tag_box = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(8.5), Inches(0.45), Inches(4.0), Inches(0.42))
         tag_box.fill.solid(); tag_box.fill.fore_color.rgb = LIGHT_CARD; tag_box.line.color.rgb = BORDER
-        p_t = tag_box.text_frame.paragraphs[0]; p_t.text = tag; p_t.alignment = PP_ALIGN.CENTER; p_t.font.size = Pt(10.5); p_t.font.bold = True; p_t.font.color.rgb = BLUE
+        p_t = tag_box.text_frame.paragraphs[0]; p_t.text = tag; p_t.alignment = PP_ALIGN.CENTER
+        set_run_font(p_t, size=10.5, bold=True, color=BLUE)
 
 def generate_presentation(payload):
     team_name = payload.get("teamName") or "Team 1"
@@ -117,18 +122,18 @@ def generate_presentation(payload):
     s1 = prs.slides.add_slide(blank)
     tb = s1.shapes.add_textbox(Inches(1.0), Inches(1.8), Inches(11.3), Inches(3.0))
     tf = tb.text_frame
-    p1 = tf.paragraphs[0]; p1.text = "OPERATIONS & NETWORK SUPPORT"; p1.font.size = Pt(13); p1.font.bold = True; p1.font.color.rgb = BLUE
-    p2 = tf.add_paragraph(); p2.text = "Weekly Report & Teamwork Roles"; p2.font.size = Pt(34); p2.font.bold = True; p2.font.color.rgb = NAVY
-    p3 = tf.add_paragraph(); p3.text = f"Incident overview, system health, bandwidth alerts, and {team_name} operational assignments"; p3.font.size = Pt(15); p3.font.color.rgb = GRAY
-    p4 = tf.add_paragraph(); p4.text = f"{team_name}  |  {period}"; p4.font.size = Pt(12); p4.font.bold = True; p4.font.color.rgb = BLUE
+    p1 = tf.paragraphs[0]; p1.text = "OPERATIONS & NETWORK SUPPORT"; set_run_font(p1, 13, True, BLUE)
+    p2 = tf.add_paragraph(); p2.text = "Weekly Report & Teamwork Roles"; set_run_font(p2, 34, True, NAVY)
+    p3 = tf.add_paragraph(); p3.text = f"Incident overview, system health, bandwidth alerts, and {team_name} operational assignments"; set_run_font(p3, 15, False, GRAY)
+    p4 = tf.add_paragraph(); p4.text = f"{team_name}  |  {period}"; set_run_font(p4, 12, True, BLUE)
 
     c_data = [("ASSIGNED TEAM", assigned_team), ("TOTAL RESOLVED", f"{grand_total} Cases"), ("ROSTER COVERAGE", f"{active_count} Active Engineers")]
     for i, (lbl, val) in enumerate(c_data):
         c_box = s1.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(1.0 + i * 3.8), Inches(5.4), Inches(3.5), Inches(1.1))
         c_box.fill.solid(); c_box.fill.fore_color.rgb = LIGHT_CARD; c_box.line.color.rgb = BORDER
         tf_c = c_box.text_frame
-        p_c1 = tf_c.paragraphs[0]; p_c1.text = lbl; p_c1.font.size = Pt(10); p_c1.font.bold = True; p_c1.font.color.rgb = BLUE
-        p_c2 = tf_c.add_paragraph(); p_c2.text = val; p_c2.font.size = Pt(14); p_c2.font.bold = True; p_c2.font.color.rgb = NAVY
+        p_c1 = tf_c.paragraphs[0]; p_c1.text = lbl; set_run_font(p_c1, 10, True, BLUE)
+        p_c2 = tf_c.add_paragraph(); p_c2.text = val; set_run_font(p_c2, 14, True, NAVY)
 
     # ==========================================
     # SLIDE 2: KPI Overview
@@ -144,9 +149,9 @@ def generate_presentation(payload):
         box = s2.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8 + i * 4.0), Inches(1.85), Inches(3.7), Inches(3.7))
         box.fill.solid(); box.fill.fore_color.rgb = LIGHT_CARD; box.line.color.rgb = BORDER
         tf = box.text_frame; tf.word_wrap = True
-        p = tf.paragraphs[0]; p.text = val; p.alignment = PP_ALIGN.CENTER; p.font.size = Pt(46); p.font.bold = True; p.font.color.rgb = val_clr
-        p = tf.add_paragraph(); p.text = title; p.alignment = PP_ALIGN.CENTER; p.font.size = Pt(16); p.font.bold = True; p.font.color.rgb = NAVY
-        p = tf.add_paragraph(); p.text = sub; p.alignment = PP_ALIGN.CENTER; p.font.size = Pt(12); p.font.color.rgb = GRAY
+        p = tf.paragraphs[0]; p.text = val; p.alignment = PP_ALIGN.CENTER; set_run_font(p, 46, True, val_clr)
+        p = tf.add_paragraph(); p.text = title; p.alignment = PP_ALIGN.CENTER; set_run_font(p, 16, True, NAVY)
+        p = tf.add_paragraph(); p.text = sub; p.alignment = PP_ALIGN.CENTER; set_run_font(p, 12, False, GRAY)
 
     ft_s2 = s2.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(5.85), Inches(11.73), Inches(0.95))
     ft_s2.fill.solid(); ft_s2.fill.fore_color.rgb = LIGHT_CARD; ft_s2.line.color.rgb = BORDER
@@ -157,7 +162,7 @@ def generate_presentation(payload):
     top_share = f"{((top1_c + top2_c) / grand_total * 100):.0f}%" if grand_total > 0 else "0%"
     p_ft2 = ft_s2.text_frame.paragraphs[0]
     p_ft2.text = f"• {sla_rate} of total volume ({t30}/{grand_total} cases) resolved in under 30 minutes.\n• Top frontline contributors: {top1} ({top1_c}) and {top2} ({top2_c}) handled {top_share} of total queue."
-    p_ft2.font.size = Pt(11); p_ft2.font.color.rgb = NAVY
+    set_run_font(p_ft2, 11, False, NAVY)
 
     # ==========================================
     # SLIDE 3: Staff KPI Support Cases
@@ -175,10 +180,10 @@ def generate_presentation(payload):
         row_card.fill.solid(); row_card.fill.fore_color.rgb = LIGHT_CARD; row_card.line.color.rgb = BORDER
 
         rank_tb = s3.shapes.add_textbox(Inches(0.9), cur_y + Inches(0.06), Inches(0.6), Inches(0.4))
-        p_rk = rank_tb.text_frame.paragraphs[0]; p_rk.text = f"#{i+1}"; p_rk.font.size = Pt(12); p_rk.font.bold = True; p_rk.font.color.rgb = BLUE
+        p_rk = rank_tb.text_frame.paragraphs[0]; p_rk.text = f"#{i+1}"; set_run_font(p_rk, 12, True, BLUE)
 
         tb_n = s3.shapes.add_textbox(Inches(1.6), cur_y + Inches(0.06), Inches(3.2), Inches(0.4))
-        p_n = tb_n.text_frame.paragraphs[0]; p_n.text = s["name"]; p_n.font.size = Pt(12); p_n.font.bold = True; p_n.font.color.rgb = NAVY
+        p_n = tb_n.text_frame.paragraphs[0]; p_n.text = s["name"]; set_run_font(p_n, 12, True, NAVY)
 
         bar_max_w = 4.8
         bar_w = Inches(max(0.2, (s["total"] / max_cases) * bar_max_w))
@@ -186,7 +191,8 @@ def generate_presentation(payload):
         bar.fill.solid(); bar.fill.fore_color.rgb = BLUE; bar.line.fill.background()
 
         tb_c = s3.shapes.add_textbox(Inches(10.2), cur_y + Inches(0.06), Inches(2.1), Inches(0.4))
-        p_c = tb_c.text_frame.paragraphs[0]; p_c.text = f"{s['total']} cases"; p_c.font.size = Pt(12); p_c.font.bold = True; p_c.font.color.rgb = BLUE; p_c.alignment = PP_ALIGN.RIGHT
+        p_c = tb_c.text_frame.paragraphs[0]; p_c.text = f"{s['total']} cases"; p_c.alignment = PP_ALIGN.RIGHT
+        set_run_font(p_c, 12, True, BLUE)
 
     # ==========================================
     # SLIDE 4: Resolution Turnaround Time
@@ -198,7 +204,7 @@ def generate_presentation(payload):
         sq = s4.shapes.add_shape(MSO_SHAPE.RECTANGLE, lg_x, Inches(1.15), Inches(0.16), Inches(0.16))
         sq.fill.solid(); sq.fill.fore_color.rgb = clr; sq.line.fill.background()
         tb_lg = s4.shapes.add_textbox(lg_x + Inches(0.2), Inches(1.02), Inches(0.8), Inches(0.35))
-        p_lg = tb_lg.text_frame.paragraphs[0]; p_lg.text = lbl; p_lg.font.size = Pt(9.5); p_lg.font.bold = True; p_lg.font.color.rgb = GRAY
+        p_lg = tb_lg.text_frame.paragraphs[0]; p_lg.text = lbl; set_run_font(p_lg, 9.5, True, GRAY)
         lg_x += Inches(0.95)
 
     chart_bg = s4.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(1.6), Inches(11.73), Inches(4.55))
@@ -209,7 +215,8 @@ def generate_presentation(payload):
     for idx, s in enumerate(processed_staff[:9]):
         curr_y = Inches(1.75) + idx * row_step
         tb_name = s4.shapes.add_textbox(Inches(0.9), curr_y - Inches(0.08), Inches(2.4), Inches(0.35))
-        p_name = tb_name.text_frame.paragraphs[0]; p_name.text = s["name"]; p_name.font.size = Pt(9.5); p_name.font.bold = True; p_name.font.color.rgb = NAVY; p_name.alignment = PP_ALIGN.RIGHT
+        p_name = tb_name.text_frame.paragraphs[0]; p_name.text = s["name"]; p_name.alignment = PP_ALIGN.RIGHT
+        set_run_font(p_name, 9.5, True, NAVY)
         curr_x = Inches(3.4)
         for count, clr in [(s["m30"], CLR_30M), (s["h1"], CLR_1H), (s["h2"], CLR_2H), (s["h3"], CLR_3H), (s["over3"], CLR_OVER3)]:
             if count > 0:
@@ -218,17 +225,19 @@ def generate_presentation(payload):
                 seg.fill.solid(); seg.fill.fore_color.rgb = clr; seg.line.fill.background()
                 curr_x += seg_w
         tb_tot = s4.shapes.add_textbox(curr_x + Inches(0.12), curr_y - Inches(0.08), Inches(0.6), Inches(0.35))
-        p_tot = tb_tot.text_frame.paragraphs[0]; p_tot.text = str(s["total"]); p_tot.font.size = Pt(10); p_tot.font.bold = True; p_tot.font.color.rgb = NAVY
+        p_tot = tb_tot.text_frame.paragraphs[0]; p_tot.text = str(s["total"])
+        set_run_font(p_tot, 10, True, NAVY)
 
     top_escalator = processed_staff[0]["name"] if active_count > 0 else "Lead"
     ft_box = s4.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(6.32), Inches(11.73), Inches(0.68))
     ft_box.fill.solid(); ft_box.fill.fore_color.rgb = LIGHT_CARD; ft_box.line.color.rgb = BORDER
     p_ft = ft_box.text_frame.paragraphs[0]
     p_ft.text = f"Fast Turnaround: {t30} cases closed <30m. Complex escalations (>3h) concentrated under Lead {main_super} & {top_escalator}.   {sla_rate} SLA Sub-30m"
-    p_ft.font.size = Pt(10.5); p_ft.font.color.rgb = GRAY; p_ft.alignment = PP_ALIGN.CENTER
+    p_ft.alignment = PP_ALIGN.CENTER
+    set_run_font(p_ft, 10.5, False, GRAY)
 
     # ==========================================
-    # SLIDE 5: Staff Knowledge & Ability (Box Text Color: BLACK)
+    # SLIDE 5: Staff Knowledge & Ability (ALL RUNS FORCED TO BLACK)
     # ==========================================
     s5 = prs.slides.add_slide(blank)
     add_header(s5, "SECTION II • Continuous Training", "Staff Knowledge & Ability", "Core operational capabilities and continuous technical upskilling roadmap", "Scheduled Sessions Active")
@@ -236,17 +245,22 @@ def generate_presentation(payload):
     box1 = s5.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(2.0), Inches(5.6), Inches(4.5))
     box1.fill.solid(); box1.fill.fore_color.rgb = LIGHT_CARD; box1.line.color.rgb = BORDER
     tf1 = box1.text_frame; tf1.word_wrap = True
-    p = tf1.paragraphs[0]; p.text = "Support Competencies"; p.font.size = Pt(16); p.font.bold = True; p.font.color.rgb = BLACK
-    p = tf1.add_paragraph(); p.text = "\n• Customer Support: End-to-end client issue resolution.\n\n• Internal Support: Cross-functional technical assistance."; p.font.size = Pt(13); p.font.color.rgb = BLACK
+    p = tf1.paragraphs[0]; p.text = "Support Competencies"; set_run_font(p, 16, True, BLACK)
+    
+    p = tf1.add_paragraph(); p.text = "• Customer Support: End-to-end client issue resolution."; p.space_before = Pt(14); set_run_font(p, 13, False, BLACK)
+    p = tf1.add_paragraph(); p.text = "• Internal Support: Cross-functional technical assistance."; p.space_before = Pt(10); set_run_font(p, 13, False, BLACK)
 
     box2 = s5.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(6.9), Inches(2.0), Inches(5.6), Inches(4.5))
     box2.fill.solid(); box2.fill.fore_color.rgb = LIGHT_CARD; box2.line.color.rgb = BORDER
     tf2 = box2.text_frame; tf2.word_wrap = True
-    p = tf2.paragraphs[0]; p.text = "Upcoming Internal Training"; p.font.size = Pt(16); p.font.bold = True; p.font.color.rgb = BLACK
-    p = tf2.add_paragraph(); p.text = "\n• Core Network: Internal infrastructure & topology.\n\n• Monitoring Tools: Alerting thresholds & telemetry.\n\n• Products & Services: Solution portfolio updates."; p.font.size = Pt(13); p.font.color.rgb = BLACK
+    p = tf2.paragraphs[0]; p.text = "Upcoming Internal Training"; set_run_font(p, 16, True, BLACK)
+    
+    p = tf2.add_paragraph(); p.text = "• Core Network: Internal infrastructure & topology."; p.space_before = Pt(14); set_run_font(p, 13, False, BLACK)
+    p = tf2.add_paragraph(); p.text = "• Monitoring Tools: Alerting thresholds & telemetry."; p.space_before = Pt(10); set_run_font(p, 13, False, BLACK)
+    p = tf2.add_paragraph(); p.text = "• Products & Services: Solution portfolio updates."; p.space_before = Pt(10); set_run_font(p, 13, False, BLACK)
 
     # ==========================================
-    # SLIDE 6: Tool Supports & System Health (Box Text Color: BLACK)
+    # SLIDE 6: Tool Supports & System Health (ALL RUNS FORCED TO BLACK)
     # ==========================================
     s6 = prs.slides.add_slide(blank)
     add_header(s6, "SECTION III • Infrastructure Health", "Tool Supports & System Health", "Operational health status across internal tools, billing pipelines, and support suites", "Weekly Uptime: 100%")
@@ -260,18 +274,21 @@ def generate_presentation(payload):
         box = s6.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8 + i * 2.95), Inches(2.0), Inches(2.8), Inches(4.1))
         box.fill.solid(); box.fill.fore_color.rgb = LIGHT_CARD; box.line.color.rgb = BORDER
         tf = box.text_frame; tf.word_wrap = True
-        p = tf.paragraphs[0]; p.text = name; p.alignment = PP_ALIGN.CENTER; p.font.size = Pt(16); p.font.bold = True; p.font.color.rgb = BLACK
-        p = tf.add_paragraph(); p.text = "\n" + status; p.alignment = PP_ALIGN.CENTER; p.font.size = Pt(15); p.font.bold = True; p.font.color.rgb = BLACK
-        p = tf.add_paragraph(); p.text = sub; p.alignment = PP_ALIGN.CENTER; p.font.size = Pt(11); p.font.color.rgb = BLACK
+        
+        p = tf.paragraphs[0]; p.text = name; p.alignment = PP_ALIGN.CENTER; set_run_font(p, 16, True, BLACK)
+        p = tf.add_paragraph(); p.text = status; p.alignment = PP_ALIGN.CENTER; p.space_before = Pt(14); set_run_font(p, 15, True, BLACK)
+        p = tf.add_paragraph(); p.text = sub; p.alignment = PP_ALIGN.CENTER; p.space_before = Pt(8); set_run_font(p, 11, False, BLACK)
+        
         badge = s6.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(1.35 + i * 2.95), Inches(5.4), Inches(1.7), Inches(0.42))
         badge.fill.solid(); badge.fill.fore_color.rgb = WHITE; badge.line.color.rgb = BORDER
-        p_b = badge.text_frame.paragraphs[0]; p_b.text = badge_txt; p_b.alignment = PP_ALIGN.CENTER; p_b.font.size = Pt(10.5); p_b.font.bold = True; p_b.font.color.rgb = BLACK
+        p_b = badge.text_frame.paragraphs[0]; p_b.text = badge_txt; p_b.alignment = PP_ALIGN.CENTER; set_run_font(p_b, 10.5, True, BLACK)
 
     ft_s6 = s6.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(6.32), Inches(11.73), Inches(0.68))
     ft_s6.fill.solid(); ft_s6.fill.fore_color.rgb = LIGHT_CARD; ft_s6.line.color.rgb = BORDER
     p_ft6 = ft_s6.text_frame.paragraphs[0]
     p_ft6.text = "All operational tools maintained 100% availability with zero ticket synchronization lags."
-    p_ft6.font.size = Pt(11); p_ft6.font.color.rgb = GRAY; p_ft6.alignment = PP_ALIGN.CENTER
+    p_ft6.alignment = PP_ALIGN.CENTER
+    set_run_font(p_ft6, 11, False, GRAY)
 
     # ==========================================
     # SLIDE 7: High Capacity Rules
@@ -291,18 +308,19 @@ def generate_presentation(payload):
     for i, w in enumerate([Inches(3.2), Inches(2.5), Inches(3.0), Inches(3.03)]): tbl.columns[i].width = w
     for r_idx, row in enumerate(bw_high):
         for c_idx, val in enumerate(row):
-            c = tbl.cell(r_idx, c_idx); c.text = val; p = c.text_frame.paragraphs[0]; p.font.size = Pt(11)
+            c = tbl.cell(r_idx, c_idx); c.text = val; p = c.text_frame.paragraphs[0]
             if r_idx == 0:
                 c.fill.solid(); c.fill.fore_color.rgb = BLUE
-                p.font.bold = True; p.font.color.rgb = WHITE
+                set_run_font(p, 11, True, WHITE)
             else:
-                p.font.color.rgb = NAVY
+                set_run_font(p, 11, False, NAVY)
 
     ft_s7 = s7.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(6.4), Inches(11.73), Inches(0.6))
     ft_s7.fill.solid(); ft_s7.fill.fore_color.rgb = LIGHT_CARD; ft_s7.line.color.rgb = BORDER
     p_ft7 = ft_s7.text_frame.paragraphs[0]
     p_ft7.text = "Automated Telegram & email telemetry alerts trigger immediately when thresholds are exceeded.   5 Main High-Capacity Links Active"
-    p_ft7.font.size = Pt(10.5); p_ft7.font.color.rgb = GRAY; p_ft7.alignment = PP_ALIGN.CENTER
+    p_ft7.alignment = PP_ALIGN.CENTER
+    set_run_font(p_ft7, 10.5, False, GRAY)
 
     # ==========================================
     # SLIDE 8: Links Under 5 Gbps
@@ -321,21 +339,22 @@ def generate_presentation(payload):
         card = s8.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), y_pos, Inches(11.73), Inches(0.72))
         card.fill.solid(); card.fill.fore_color.rgb = LIGHT_CARD; card.line.color.rgb = BORDER
         tb_car = s8.shapes.add_textbox(Inches(1.2), y_pos + Inches(0.15), Inches(4.5), Inches(0.4))
-        p_car = tb_car.text_frame.paragraphs[0]; p_car.text = carrier; p_car.font.size = Pt(13); p_car.font.bold = True; p_car.font.color.rgb = NAVY
+        p_car = tb_car.text_frame.paragraphs[0]; p_car.text = carrier; set_run_font(p_car, 13, True, NAVY)
         tb_th = s8.shapes.add_textbox(Inches(6.8), y_pos + Inches(0.15), Inches(2.2), Inches(0.4))
-        p_th = tb_th.text_frame.paragraphs[0]; p_th.text = threshold; p_th.font.size = Pt(13); p_th.font.bold = True; p_th.font.color.rgb = BLUE
+        p_th = tb_th.text_frame.paragraphs[0]; p_th.text = threshold; set_run_font(p_th, 13, True, BLUE)
         badge = s8.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(9.8), y_pos + Inches(0.14), Inches(2.4), Inches(0.42))
         badge.fill.solid(); badge.fill.fore_color.rgb = AMBER_BG; badge.line.fill.background()
-        p_b = badge.text_frame.paragraphs[0]; p_b.text = "Alert over committed"; p_b.alignment = PP_ALIGN.CENTER; p_b.font.size = Pt(10.5); p_b.font.bold = True; p_b.font.color.rgb = AMBER_TXT
+        p_b = badge.text_frame.paragraphs[0]; p_b.text = "Alert over committed"; p_b.alignment = PP_ALIGN.CENTER; set_run_font(p_b, 10.5, True, AMBER_TXT)
 
     ft_s8 = s8.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(6.4), Inches(11.73), Inches(0.6))
     ft_s8.fill.solid(); ft_s8.fill.fore_color.rgb = LIGHT_CARD; ft_s8.line.color.rgb = BORDER
     p_ft8 = ft_s8.text_frame.paragraphs[0]
     p_ft8.text = "Bandwidth alarms prompt immediate traffic rerouting to avoid overage surcharges.   5 Regional Links Monitored"
-    p_ft8.font.size = Pt(10.5); p_ft8.font.color.rgb = GRAY; p_ft8.alignment = PP_ALIGN.CENTER
+    p_ft8.alignment = PP_ALIGN.CENTER
+    set_run_font(p_ft8, 10.5, False, GRAY)
 
     # ==========================================
-    # SLIDE 9: Leadership & Supervision (Box Text Color: BLACK)
+    # SLIDE 9: Leadership & Supervision (ALL RUNS FORCED TO BLACK)
     # ==========================================
     s9 = prs.slides.add_slide(blank)
     add_header(s9, "SECTION V • Leadership & Escalation", f"{team_name}: Senior Team Leader & Supervision", "Escalation path and operational supervision command structure", "24/7 Escalation Active")
@@ -343,18 +362,18 @@ def generate_presentation(payload):
     lead1 = s9.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(2.0), Inches(5.6), Inches(4.5))
     lead1.fill.solid(); lead1.fill.fore_color.rgb = LIGHT_CARD; lead1.line.color.rgb = BORDER
     tf_l1 = lead1.text_frame; tf_l1.word_wrap = True
-    p = tf_l1.paragraphs[0]; p.text = "PRIMARY LEAD"; p.font.size = Pt(11); p.font.bold = True; p.font.color.rgb = BLACK
-    p = tf_l1.add_paragraph(); p.text = "Main Supervisor"; p.font.size = Pt(15); p.font.bold = True; p.font.color.rgb = BLACK
-    p = tf_l1.add_paragraph(); p.text = main_super; p.font.size = Pt(22); p.font.bold = True; p.font.color.rgb = BLACK
-    p = tf_l1.add_paragraph(); p.text = "\nPrimary operational lead for shift supervision, queue balance, and primary escalations."; p.font.size = Pt(12); p.font.color.rgb = BLACK
+    p = tf_l1.paragraphs[0]; p.text = "PRIMARY LEAD"; set_run_font(p, 11, True, BLACK)
+    p = tf_l1.add_paragraph(); p.text = "Main Supervisor"; p.space_before = Pt(4); set_run_font(p, 15, True, BLACK)
+    p = tf_l1.add_paragraph(); p.text = main_super; p.space_before = Pt(6); set_run_font(p, 22, True, BLACK)
+    p = tf_l1.add_paragraph(); p.text = "Primary operational lead for shift supervision, queue balance, and primary escalations."; p.space_before = Pt(14); set_run_font(p, 12, False, BLACK)
 
     lead2 = s9.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(6.9), Inches(2.0), Inches(5.6), Inches(4.5))
     lead2.fill.solid(); lead2.fill.fore_color.rgb = LIGHT_CARD; lead2.line.color.rgb = BORDER
     tf_l2 = lead2.text_frame; tf_l2.word_wrap = True
-    p = tf_l2.paragraphs[0]; p.text = "STANDBY LEAD"; p.font.size = Pt(11); p.font.bold = True; p.font.color.rgb = BLACK
-    p = tf_l2.add_paragraph(); p.text = "Backup Supervisor"; p.font.size = Pt(15); p.font.bold = True; p.font.color.rgb = BLACK
-    p = tf_l2.add_paragraph(); p.text = backup_super; p.font.size = Pt(22); p.font.bold = True; p.font.color.rgb = BLACK
-    p = tf_l2.add_paragraph(); p.text = "\nStandby supervisor to manage queue escalations during supervisor absence or high ticket load."; p.font.size = Pt(12); p.font.color.rgb = BLACK
+    p = tf_l2.paragraphs[0]; p.text = "STANDBY LEAD"; set_run_font(p, 11, True, BLACK)
+    p = tf_l2.add_paragraph(); p.text = "Backup Supervisor"; p.space_before = Pt(4); set_run_font(p, 15, True, BLACK)
+    p = tf_l2.add_paragraph(); p.text = backup_super; p.space_before = Pt(6); set_run_font(p, 22, True, BLACK)
+    p = tf_l2.add_paragraph(); p.text = "Standby supervisor to manage queue escalations during supervisor absence or high ticket load."; p.space_before = Pt(14); set_run_font(p, 12, False, BLACK)
 
     # ==========================================
     # SLIDE 10: Dispatch Stations & Reports
@@ -364,23 +383,19 @@ def generate_presentation(payload):
     st1 = s10.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(2.0), Inches(5.6), Inches(4.5))
     st1.fill.solid(); st1.fill.fore_color.rgb = LIGHT_CARD; st1.line.color.rgb = BORDER
     tf_st1 = st1.text_frame; tf_st1.word_wrap = True
-    p = tf_st1.paragraphs[0]; p.text = "External Stations (HQ)"; p.font.size = Pt(16); p.font.bold = True; p.font.color.rgb = NAVY
-    p = tf_st1.add_paragraph(); p.text = "Direct client-facing response\n"; p.font.size = Pt(11); p.font.color.rgb = GRAY
-    p = tf_st1.add_paragraph()
-    p.text = f"HQ01: {hq01}\nHQ02: {hq02}\nHQ03: {hq03}\nHQ04: {hq04}\n\nNote: Station HQ04 rotated daily across designated engineers."
-    p.font.size = Pt(12.5); p.font.color.rgb = NAVY
+    p = tf_st1.paragraphs[0]; p.text = "External Stations (HQ)"; set_run_font(p, 16, True, NAVY)
+    p = tf_st1.add_paragraph(); p.text = "Direct client-facing response"; set_run_font(p, 11, False, GRAY)
+    p = tf_st1.add_paragraph(); p.text = f"HQ01: {hq01}\nHQ02: {hq02}\nHQ03: {hq03}\nHQ04: {hq04}\n\nNote: Station HQ04 rotated daily across designated engineers."; p.space_before = Pt(10); set_run_font(p, 12.5, False, NAVY)
 
     st2 = s10.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(6.9), Inches(2.0), Inches(5.6), Inches(4.5))
     st2.fill.solid(); st2.fill.fore_color.rgb = LIGHT_CARD; st2.line.color.rgb = BORDER
     tf_st2 = st2.text_frame; tf_st2.word_wrap = True
-    p = tf_st2.paragraphs[0]; p.text = "Internal Support & Reports"; p.font.size = Pt(16); p.font.bold = True; p.font.color.rgb = NAVY
-    p = tf_st2.add_paragraph(); p.text = "Shift monitoring & AMIS handling\n"; p.font.size = Pt(11); p.font.color.rgb = GRAY
-    p = tf_st2.add_paragraph()
-    p.text = f"Monitoring Lead: {mon_lead}\nMonitoring Backup: {mon_backup}\nAMIS Reports: {amis_rep}\nInternal Queue: {int_queue}"
-    p.font.size = Pt(12.5); p.font.color.rgb = NAVY
+    p = tf_st2.paragraphs[0]; p.text = "Internal Support & Reports"; set_run_font(p, 16, True, NAVY)
+    p = tf_st2.add_paragraph(); p.text = "Shift monitoring & AMIS handling"; set_run_font(p, 11, False, GRAY)
+    p = tf_st2.add_paragraph(); p.text = f"Monitoring Lead: {mon_lead}\nMonitoring Backup: {mon_backup}\nAMIS Reports: {amis_rep}\nInternal Queue: {int_queue}"; p.space_before = Pt(10); set_run_font(p, 12.5, False, NAVY)
 
     # ==========================================
-    # SLIDE 11: Action Plan (Box Text Color: BLACK)
+    # SLIDE 11: Action Plan (ALL RUNS FORCED TO BLACK)
     # ==========================================
     s11 = prs.slides.add_slide(blank)
     add_header(s11, "EXECUTIVE SUMMARY • Next Steps", "Action Plan & Strategic Checkpoints", "Key operational achievements and immediate priorities for upcoming cycle")
@@ -393,14 +408,16 @@ def generate_presentation(payload):
         box = s11.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8 + i * 4.0), Inches(2.0), Inches(3.7), Inches(4.1))
         box.fill.solid(); box.fill.fore_color.rgb = LIGHT_CARD; box.line.color.rgb = BORDER
         tf = box.text_frame; tf.word_wrap = True
-        p = tf.paragraphs[0]; p.text = title; p.font.size = Pt(16); p.font.bold = True; p.font.color.rgb = BLACK
-        p = tf.add_paragraph(); p.text = "\n" + desc; p.font.size = Pt(12); p.font.color.rgb = BLACK
+        
+        p = tf.paragraphs[0]; p.text = title; set_run_font(p, 16, True, BLACK)
+        p_desc = tf.add_paragraph(); p_desc.text = desc; p_desc.space_before = Pt(14); set_run_font(p_desc, 12, False, BLACK)
 
     ft_s11 = s11.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(6.32), Inches(11.73), Inches(0.68))
     ft_s11.fill.solid(); ft_s11.fill.fore_color.rgb = LIGHT_CARD; ft_s11.line.color.rgb = BORDER
     p_ft11 = ft_s11.text_frame.paragraphs[0]
     p_ft11.text = f"Weekly Review Cadence: Performance benchmarking completed with 100% team compliance.   Operations {assigned_team}"
-    p_ft11.font.size = Pt(11); p_ft11.font.color.rgb = GRAY; p_ft11.alignment = PP_ALIGN.CENTER
+    p_ft11.alignment = PP_ALIGN.CENTER
+    set_run_font(p_ft11, 11, False, GRAY)
 
     # ==========================================
     # SLIDE 12: Questions & Discussion
@@ -408,8 +425,8 @@ def generate_presentation(payload):
     s12 = prs.slides.add_slide(blank)
     tb_q = s12.shapes.add_textbox(Inches(1.0), Inches(2.0), Inches(11.333), Inches(2.2))
     tf_q = tb_q.text_frame; tf_q.word_wrap = True
-    p = tf_q.paragraphs[0]; p.text = "Questions & Discussion"; p.alignment = PP_ALIGN.CENTER; p.font.size = Pt(40); p.font.bold = True; p.font.color.rgb = NAVY
-    p_sub = tf_q.add_paragraph(); p_sub.text = f"Weekly Case Summary Report • Operations & Network Support {team_name}"; p_sub.alignment = PP_ALIGN.CENTER; p_sub.font.size = Pt(15); p_sub.font.color.rgb = GRAY
+    p = tf_q.paragraphs[0]; p.text = "Questions & Discussion"; p.alignment = PP_ALIGN.CENTER; set_run_font(p, 40, True, NAVY)
+    p_sub = tf_q.add_paragraph(); p_sub.text = f"Weekly Case Summary Report • Operations & Network Support {team_name}"; p_sub.alignment = PP_ALIGN.CENTER; set_run_font(p_sub, 15, False, GRAY)
 
     q_data = [
         ("SUPERVISOR LEAD", main_super),
@@ -420,8 +437,8 @@ def generate_presentation(payload):
         box_q = s12.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(1.2 + i * 3.8), Inches(4.8), Inches(3.4), Inches(1.2))
         box_q.fill.solid(); box_q.fill.fore_color.rgb = LIGHT_CARD; box_q.line.color.rgb = BORDER
         tf_bq = box_q.text_frame; tf_bq.word_wrap = True
-        p_bq1 = tf_bq.paragraphs[0]; p_bq1.text = lbl; p_bq1.alignment = PP_ALIGN.CENTER; p_bq1.font.size = Pt(10.5); p_bq1.font.bold = True; p_bq1.font.color.rgb = BLUE
-        p_bq2 = tf_bq.add_paragraph(); p_bq2.text = val; p_bq2.alignment = PP_ALIGN.CENTER; p_bq2.font.size = Pt(14); p_bq2.font.bold = True; p_bq2.font.color.rgb = NAVY
+        p_bq1 = tf_bq.paragraphs[0]; p_bq1.text = lbl; p_bq1.alignment = PP_ALIGN.CENTER; set_run_font(p_bq1, 10.5, True, BLUE)
+        p_bq2 = tf_bq.add_paragraph(); p_bq2.text = val; p_bq2.alignment = PP_ALIGN.CENTER; set_run_font(p_bq2, 14, True, NAVY)
 
     output = io.BytesIO()
     prs.save(output)
