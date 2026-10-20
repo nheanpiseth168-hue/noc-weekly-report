@@ -7,7 +7,9 @@ from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN
 from pptx.enum.shapes import MSO_SHAPE
 
-app = Flask(__name__)
+base_dir = os.path.dirname(os.path.abspath(__file__))
+template_dir = os.path.abspath(os.path.join(base_dir, "..", "templates"))
+app = Flask(__name__, template_folder=template_dir)
 
 # Core Theme Palette
 NAVY = RGBColor(15, 23, 42)
@@ -49,10 +51,13 @@ def add_header(slide, section, title, subtitle):
         p3.font.color.rgb = GRAY
 
 @app.route("/")
+@app.route("/api")
+@app.route("/api/index")
 def index():
     return render_template("index.html")
 
 @app.route("/api/export-pptx", methods=["POST"])
+@app.route("/export-pptx", methods=["POST"])
 def export_pptx():
     payload = request.get_json()
     if not payload:
