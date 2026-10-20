@@ -7,8 +7,13 @@ from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN
 from pptx.enum.shapes import MSO_SHAPE
 
+# Dynamic template resolution (works from root or api/ subfolder)
 base_dir = os.path.dirname(os.path.abspath(__file__))
-template_dir = os.path.abspath(os.path.join(base_dir, "..", "templates"))
+if os.path.exists(os.path.join(base_dir, "templates")):
+    template_dir = os.path.join(base_dir, "templates")
+else:
+    template_dir = os.path.abspath(os.path.join(base_dir, "..", "templates"))
+
 app = Flask(__name__, template_folder=template_dir)
 
 NAVY = RGBColor(15, 23, 42)
