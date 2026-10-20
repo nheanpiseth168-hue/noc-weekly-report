@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NOC Weekly Report Generator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-8 font-sans">
+  <div class="max-w-7xl mx-auto space-y-8">
+    
+    <!-- Top Header -->
+    <header class="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-slate-800 gap-4">
+      <div>
+        <h1 class="text-2xl md:text-3xl font-bold tracking-tight text-white flex items-center gap-3">
+          <i class="fa-solid fa-chart-line text-emerald-400"></i> NOC Weekly Report System
+        </h1>
+        <p class="text-slate-400 text-sm mt-1">Input weekly ticket metrics, operational health, and roster assignments to export to PowerPoint.</p>
+      </div>
+      <div class="flex gap-3">
+        <button onclick="resetDefaults()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm transition">
+          <i class="fa-solid fa-rotate-left mr-1.5"></i> Reset Sample Data
+        </button>
+        <button onclick="exportPPTX()" id="exportBtn" class="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold rounded-lg text-sm shadow-lg shadow-emerald-500/20 transition flex items-center">
+          <i class="fa-solid fa-file-powerpoint mr-2 text-base"></i> Export to PowerPoint (.PPTX)
+        </button>
+      </div>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      <!-- Left Column: Inputs -->
+      <div class="lg:col-span-2 space-y-6">
+        
+        <!-- General Metadata -->
+        <div class="bg-slate-800/80 rounded-xl p-5 border border-slate-700/60 shadow-sm">
+          <h2 class="text-base font-semibold text-white mb-4 flex items-center gap-2">
+            <i class="fa-regular fa-calendar-check text-emerald-400"></i> General Information
+          </h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">Team Name</label>
+              <input type="text" id="teamName" value="Team 1" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none text-white">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">Reporting Period</label>
+              <input type="text" id="reportPeriod" value="Week 42 (Current Shift)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none text-white">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">Critical Incidents (P1)</label>
+              <input type="number" id="criticalIncidents" value="0" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none text-white">
+            </div>
+          </div>
+        </div>
+
+        <!-- Staff Tickets Table -->
+        <div class="bg-slate-800/80 rounded-xl p-5 border border-slate-700/60 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 class="text-base font-semibold text-white flex items-center gap-2">
+                <i class="fa-solid fa-users text-emerald-400"></i> Staff Performance & SLA Metrics
+              </h2>
+              <p class="text-xs text-slate-400 mt-0.5">Input ticket resolution counts. Totals & SLA percentages update automatically.</p>
+            </div>
+            <button onclick="addStaffRow()" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs font-medium text-emerald-400 transition">
+              <i class="fa-solid fa-plus mr-1"></i> Add Engineer
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm" id="staffTable">
+              <thead>
+                <tr class="text-slate-400 text-xs border-b border-slate-700/80">
+                  <th class="pb-2 font-medium">Engineer Name</th>
+                  <th class="pb-2 font-medium text-center w-16">&lt;30m</th>
+                  <th class="pb-2 font-medium text-center w-16">1h</th>
+                  <th class="pb-2 font-medium text-center w-16">2h</th>
+                  <th class="pb-2 font-medium text-center w-16">3h</th>
+                  <th class="pb-2 font-medium text-center w-16">&gt;3h</th>
+                  <th class="pb-2 font-medium text-center w-20">Total</th>
+                  <th class="pb-2 font-medium text-center w-10"></th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-800 text-slate-200" id="staffTableBody"></tbody>
+              <tfoot>
+                <tr class="font-bold text-white border-t border-slate-700">
+                  <td class="pt-3">Totals</td>
+                  <td class="pt-3 text-center text-emerald-400" id="sum30m">0</td>
+                  <td class="pt-3 text-center text-amber-400" id="sum1h">0</td>
+                  <td class="pt-3 text-center text-orange-400" id="sum2h">0</td>
+                  <td class="pt-3 text-center text-rose-400" id="sum3h">0</td>
+                  <td class="pt-3 text-center text-red-500" id="sumOver3h">0</td>
+                  <td class="pt-3 text-center text-emerald-300 text-base" id="grandTotal">0</td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <!-- Team Assignments -->
+        <div class="bg-slate-800/80 rounded-xl p-5 border border-slate-700/60 shadow-sm">
+          <h2 class="text-base font-semibold text-white mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-user-gear text-emerald-400"></i> Operational Roles & Workstations
+          </h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">Main Supervisor</label>
+              <input type="text" id="roleMainSuper" value="MAK BUN LEANG" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">Backup Supervisor</label>
+              <input type="text" id="roleBackupSuper" value="POV PUNLORK" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">External Support (HQ01 - HQ03)</label>
+              <input type="text" id="roleHQFixed" value="HQ01: MAK BUN LEANG | HQ02: POV PUNLORK | HQ03: CHUM SOVANNVISAL" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">HQ04 Station (Rotating)</label>
+              <input type="text" id="roleHQ04" value="NHEAN PISETH / OUM SENGKRUY / I CHHENGKHEANG" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">Dedicated Internal Support</label>
+              <input type="text" id="roleInternal" value="LENG CHANNLY, LONG TOKA, KORRY MUHAMMADSOFEK" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">Monitoring & Email Shift</label>
+              <input type="text" id="roleMonitoring" value="Lead: LONG TOKA | Backup: KORRY MUHAMMADSOFEK" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none">
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-xs font-medium text-slate-400 mb-1">AMIS Daily Report Handling (Rotating)</label>
+              <input type="text" id="roleAmisReport" value="NHEAN PISETH, OUM SENGKRUY, I CHHENGKHEANG, LENG CHANNLY" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none">
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Status & Live Metrics -->
+      <div class="space-y-6">
+        
+        <!-- Live Counters -->
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-slate-800/80 border border-slate-700/60 p-4 rounded-xl text-center">
+            <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Total Handled</span>
+            <p class="text-3xl font-extrabold text-white mt-1" id="statTotalCases">0</p>
+          </div>
+          <div class="bg-slate-800/80 border border-slate-700/60 p-4 rounded-xl text-center">
+            <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">&lt; 30m SLA</span>
+            <p class="text-3xl font-extrabold text-emerald-400 mt-1" id="statSlaRate">0%</p>
+          </div>
+        </div>
+
+        <!-- System Platform Health -->
+        <div class="bg-slate-800/80 rounded-xl p-5 border border-slate-700/60 shadow-sm space-y-3">
+          <h2 class="text-base font-semibold text-white flex items-center gap-2">
+            <i class="fa-solid fa-server text-emerald-400"></i> Platform Status
+          </h2>
+          <div class="space-y-2 text-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-slate-300">Portal Support:</span>
+              <input type="text" id="healthPortal" value="Helpful & Responsive" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-right text-emerald-400 focus:outline-none">
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-300">AMIS Platform:</span>
+              <input type="text" id="healthAMIS" value="No Issue" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-right text-emerald-400 focus:outline-none">
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-300">Billing System:</span>
+              <input type="text" id="healthBilling" value="No Issue" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-right text-emerald-400 focus:outline-none">
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-300">RT Ticketing:</span>
+              <input type="text" id="healthRT" value="No Issue" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-right text-emerald-400 focus:outline-none">
+            </div>
+          </div>
+        </div>
+
+        <!-- Export Action Card -->
+        <div class="bg-gradient-to-br from-slate-800 to-slate-850 p-6 rounded-xl border border-slate-700/80 shadow-md text-center space-y-4">
+          <div class="w-12 h-12 bg-emerald-500/10 text-emerald-400 flex items-center justify-center rounded-full mx-auto">
+            <i class="fa-solid fa-download text-xl"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-white text-base">Direct PowerPoint Download</h3>
+            <p class="text-xs text-slate-400 mt-1">Sends the form data to the Python backend and downloads a ready-to-present PowerPoint slide deck.</p>
+          </div>
+          <button onclick="exportPPTX()" class="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold rounded-lg text-sm shadow transition">
+            Generate Presentation
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const defaultStaff = [
+      { name: "LONG TOKA", m30: 29, h1: 0, h2: 0, h3: 0, over3: 0 },
+      { name: "KORRY MUHAMMADSOFEK", m30: 24, h1: 0, h2: 0, h3: 0, over3: 0 },
+      { name: "OUM SENGKRUY", m30: 11, h1: 0, h2: 2, h3: 0, over3: 0 },
+      { name: "POV PUNLORK", m30: 7, h1: 0, h2: 0, h3: 0, over3: 0 },
+      { name: "LENG CHANNLY", m30: 5, h1: 0, h2: 1, h3: 0, over3: 0 },
+      { name: "I CHHENGKHEANG", m30: 1, h1: 1, h2: 2, h3: 1, over3: 1 },
+      { name: "NHEAN PISETH", m30: 1, h1: 2, h2: 1, h3: 0, over3: 0 },
+      { name: "CHUM SOVANNVISAL", m30: 2, h1: 0, h2: 0, h3: 0, over3: 0 },
+      { name: "MAK BUN LEANG", m30: 0, h1: 0, h2: 0, h3: 0, over3: 2 }
+    ];
+
+    let staffData = JSON.parse(JSON.stringify(defaultStaff));
+
+    function renderTable() {
+      const tbody = document.getElementById("staffTableBody");
+      tbody.innerHTML = "";
+
+      staffData.forEach((staff, index) => {
+        const total = (Number(staff.m30)||0) + (Number(staff.h1)||0) + (Number(staff.h2)||0) + (Number(staff.h3)||0) + (Number(staff.over3)||0);
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-700/30 transition-colors";
+        tr.innerHTML = `
+          <td class="py-2 pr-2">
+            <input type="text" value="${staff.name}" onchange="updateStaff(${index}, 'name', this.value)" class="w-full bg-slate-900/60 border border-slate-700/60 rounded px-2 py-1 text-xs focus:border-emerald-500 focus:outline-none text-white font-medium">
+          </td>
+          <td class="py-2 px-1 text-center">
+            <input type="number" min="0" value="${staff.m30}" oninput="updateStaff(${index}, 'm30', this.value)" class="w-14 text-center bg-slate-900 border border-slate-700/60 rounded py-1 text-xs text-emerald-400 focus:outline-none">
+          </td>
+          <td class="py-2 px-1 text-center">
+            <input type="number" min="0" value="${staff.h1}" oninput="updateStaff(${index}, 'h1', this.value)" class="w-14 text-center bg-slate-900 border border-slate-700/60 rounded py-1 text-xs text-amber-400 focus:outline-none">
+          </td>
+          <td class="py-2 px-1 text-center">
+            <input type="number" min="0" value="${staff.h2}" oninput="updateStaff(${index}, 'h2', this.value)" class="w-14 text-center bg-slate-900 border border-slate-700/60 rounded py-1 text-xs text-orange-400 focus:outline-none">
+          </td>
+          <td class="py-2 px-1 text-center">
+            <input type="number" min="0" value="${staff.h3}" oninput="updateStaff(${index}, 'h3', this.value)" class="w-14 text-center bg-slate-900 border border-slate-700/60 rounded py-1 text-xs text-rose-400 focus:outline-none">
+          </td>
+          <td class="py-2 px-1 text-center">
+            <input type="number" min="0" value="${staff.over3}" oninput="updateStaff(${index}, 'over3', this.value)" class="w-14 text-center bg-slate-900 border border-slate-700/60 rounded py-1 text-xs text-red-500 focus:outline-none">
+          </td>
+          <td class="py-2 px-1 text-center font-bold text-white text-xs">${total}</td>
+          <td class="py-2 pl-1 text-center">
+            <button onclick="removeStaff(${index})" class="text-slate-500 hover:text-red-400 transition text-xs"><i class="fa-solid fa-trash-can"></i></button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      calculateTotals();
+    }
+
+    function updateStaff(index, field, value) {
+      staffData[index][field] = field === "name" ? value : Number(value) || 0;
+      calculateTotals();
+    }
+
+    function addStaffRow() {
+      staffData.push({ name: "NEW ENGINEER", m30: 0, h1: 0, h2: 0, h3: 0, over3: 0 });
+      renderTable();
+    }
+
+    function removeStaff(index) {
+      if (staffData.length <= 1) return alert("Must have at least one engineer.");
+      staffData.splice(index, 1);
+      renderTable();
+    }
+
+    function calculateTotals() {
+      let t30 = 0, t1 = 0, t2 = 0, t3 = 0, tover = 0;
+      staffData.forEach(s => {
+        t30 += Number(s.m30) || 0;
+        t1 += Number(s.h1) || 0;
+        t2 += Number(s.h2) || 0;
+        t3 += Number(s.h3) || 0;
+        tover += Number(s.over3) || 0;
+      });
+
+      const grand = t30 + t1 + t2 + t3 + tover;
+      document.getElementById("sum30m").textContent = t30;
+      document.getElementById("sum1h").textContent = t1;
+      document.getElementById("sum2h").textContent = t2;
+      document.getElementById("sum3h").textContent = t3;
+      document.getElementById("sumOver3h").textContent = tover;
+      document.getElementById("grandTotal").textContent = grand;
+
+      document.getElementById("statTotalCases").textContent = grand;
+      const slaRate = grand > 0 ? ((t30 / grand) * 100).toFixed(1) : 0;
+      document.getElementById("statSlaRate").textContent = slaRate + "%";
+    }
+
+    function resetDefaults() {
+      staffData = JSON.parse(JSON.stringify(defaultStaff));
+      document.getElementById("teamName").value = "Team 1";
+      document.getElementById("criticalIncidents").value = "0";
+      renderTable();
+    }
+
+    async function exportPPTX() {
+      const btn = document.getElementById("exportBtn");
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Generating...`;
+
+      const payload = {
+        teamName: document.getElementById("teamName").value,
+        reportPeriod: document.getElementById("reportPeriod").value,
+        criticalIncidents: document.getElementById("criticalIncidents").value,
+        staff: staffData,
+        platform: {
+          portal: document.getElementById("healthPortal").value,
+          amis: document.getElementById("healthAMIS").value,
+          billing: document.getElementById("healthBilling").value,
+          rt: document.getElementById("healthRT").value,
+        },
+        roles: {
+          mainSuper: document.getElementById("roleMainSuper").value,
+          backupSuper: document.getElementById("roleBackupSuper").value,
+          hqFixed: document.getElementById("roleHQFixed").value,
+          hq04: document.getElementById("roleHQ04").value,
+          internal: document.getElementById("roleInternal").value,
+          monitoring: document.getElementById("roleMonitoring").value,
+          amisReport: document.getElementById("roleAmisReport").value,
+        }
+      };
+
+      try {
+        const response = await fetch("/api/export-pptx", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) throw new Error("Failed to generate file.");
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Weekly_Report_${payload.teamName.replace(/\s+/g, '_')}.pptx`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      } catch (err) {
+        alert("Export error: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-file-powerpoint mr-2 text-base"></i> Export to PowerPoint (.PPTX)`;
+      }
+    }
+
+    window.onload = renderTable;
+  </script>
+</body>
+</html>
