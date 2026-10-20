@@ -6,19 +6,94 @@
     <title>NOC Weekly Report Generator</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #0f172a; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding-bottom: 60px; }
-        .card { background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; margin-bottom: 24px; }
-        .card-header { background-color: #1e293b; border-bottom: 1px solid #334155; font-weight: 700; color: #38bdf8; }
-        .form-label { font-size: 0.85rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
-        .form-control, .form-select { background-color: #0f172a; border: 1px solid #334155; color: #f8fafc; border-radius: 6px; }
-        .form-control:focus, .form-select:focus { background-color: #0f172a; border-color: #38bdf8; color: #f8fafc; box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25); }
-        .btn-primary { background-color: #0284c7; border: none; font-weight: 600; padding: 12px 28px; border-radius: 8px; }
+        body { 
+            background-color: #0b1120; 
+            color: #f8fafc; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            padding-bottom: 70px; 
+        }
+        .card { 
+            background-color: #151f32; 
+            border: 1px solid #22324e; 
+            border-radius: 12px; 
+            margin-bottom: 24px; 
+            overflow: hidden; 
+        }
+        .card-header { 
+            background-color: #151f32; 
+            border-bottom: 1px solid #22324e; 
+            font-weight: 700; 
+            color: #38bdf8; 
+            padding: 14px 20px; 
+        }
+        .form-label { 
+            font-size: 0.8rem; 
+            font-weight: 700; 
+            color: #94a3b8; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+        }
+        .form-control, .form-select { 
+            background-color: #090e1a !important; 
+            border: 1px solid #293854 !important; 
+            color: #f8fafc !important; 
+            border-radius: 6px; 
+        }
+        .form-control:focus, .form-select:focus { 
+            background-color: #090e1a !important; 
+            border-color: #0284c7 !important; 
+            color: #ffffff !important; 
+            box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.3) !important; 
+        }
+        .btn-primary { 
+            background-color: #0284c7; 
+            border: none; 
+            font-weight: 600; 
+            padding: 12px 28px; 
+            border-radius: 8px; 
+        }
         .btn-primary:hover { background-color: #0369a1; }
         .btn-outline-secondary { border-color: #334155; color: #94a3b8; }
         .btn-outline-secondary:hover { background-color: #334155; color: #f8fafc; }
-        .table { color: #f8fafc; vertical-align: middle; }
-        .table th { color: #38bdf8; font-size: 0.8rem; text-transform: uppercase; border-bottom-color: #334155; }
-        .table td { border-bottom-color: #334155; }
+
+        /* Fix table styling and remove white background */
+        .table { 
+            color: #f8fafc !important; 
+            vertical-align: middle; 
+            margin-bottom: 0 !important;
+            --bs-table-bg: transparent !important;
+            --bs-table-hover-bg: rgba(255, 255, 255, 0.03) !important;
+            --bs-table-color: #f8fafc !important;
+            border-color: #22324e !important;
+        }
+        .table thead th { 
+            background-color: #090e1a !important; 
+            color: #38bdf8 !important; 
+            font-size: 0.78rem; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            border-bottom: 2px solid #22324e !important; 
+            padding: 12px 8px; 
+        }
+        .table tbody td { 
+            background-color: transparent !important; 
+            border-bottom: 1px solid #1e2c44 !important; 
+            padding: 8px 8px; 
+        }
+        .table tfoot td { 
+            background-color: #090e1a !important; 
+            border-top: 2px solid #0284c7 !important; 
+            border-bottom: none !important; 
+            font-weight: 700; 
+            padding: 12px 8px; 
+        }
+        .badge-total {
+            background-color: #0284c7;
+            color: #ffffff;
+            font-size: 0.95rem;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
     </style>
 </head>
 <body>
@@ -54,7 +129,7 @@
         </div>
     </div>
 
-    <!-- 2. Staff KPI Breakdown -->
+    <!-- 2. Staff KPI Breakdown with Dark Background & Real-Time Totals -->
     <div class="card shadow-sm">
         <div class="card-header d-flex justify-content-between align-items-center">
             <span>2. Staff Roster & SLA Resolution Breakdown</span>
@@ -62,31 +137,55 @@
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover mb-0 text-center" id="staffTable">
+                <table class="table table-hover text-center" id="staffTable">
                     <thead>
                         <tr>
-                            <th class="text-start ps-3" style="width: 28%;">Engineer Name</th>
-                            <th>&lt; 30m</th>
-                            <th>1h</th>
-                            <th>2h</th>
-                            <th>3h</th>
-                            <th>&gt; 3h</th>
-                            <th style="width: 8%;">Action</th>
+                            <th class="text-start ps-3" style="width: 28%;">ENGINEER NAME</th>
+                            <th style="width: 12%;">&lt; 30M</th>
+                            <th style="width: 12%;">1H</th>
+                            <th style="width: 12%;">2H</th>
+                            <th style="width: 12%;">3H</th>
+                            <th style="width: 12%;">&gt; 3H</th>
+                            <th style="width: 12%;">TOTAL</th>
+                            <th style="width: 8%;">ACTION</th>
                         </tr>
                     </thead>
                     <tbody id="staffTbody">
-                        <!-- Default 9 rows for Team 1 -->
-                        <tr><td class="ps-3"><input type="text" class="form-control s-name" value="LONG TOKA"></td><td><input type="number" class="form-control s-m30 text-center" value="26"></td><td><input type="number" class="form-control s-h1 text-center" value="2"></td><td><input type="number" class="form-control s-h2 text-center" value="1"></td><td><input type="number" class="form-control s-h3 text-center" value="0"></td><td><input type="number" class="form-control s-over3 text-center" value="0"></td><td><button class="btn btn-sm btn-danger btn-del">×</button></td></tr>
-                        <tr><td class="ps-3"><input type="text" class="form-control s-name" value="KORRY MUHAMMADSOFEK"></td><td><input type="number" class="form-control s-m30 text-center" value="21"></td><td><input type="number" class="form-control s-h1 text-center" value="2"></td><td><input type="number" class="form-control s-h2 text-center" value="1"></td><td><input type="number" class="form-control s-h3 text-center" value="0"></td><td><input type="number" class="form-control s-over3 text-center" value="0"></td><td><button class="btn btn-sm btn-danger btn-del">×</button></td></tr>
-                        <tr><td class="ps-3"><input type="text" class="form-control s-name" value="OUM SENGKRUY"></td><td><input type="number" class="form-control s-m30 text-center" value="11"></td><td><input type="number" class="form-control s-h1 text-center" value="1"></td><td><input type="number" class="form-control s-h2 text-center" value="1"></td><td><input type="number" class="form-control s-h3 text-center" value="0"></td><td><input type="number" class="form-control s-over3 text-center" value="0"></td><td><button class="btn btn-sm btn-danger btn-del">×</button></td></tr>
-                        <tr><td class="ps-3"><input type="text" class="form-control s-name" value="POV PUNLORK"></td><td><input type="number" class="form-control s-m30 text-center" value="6"></td><td><input type="number" class="form-control s-h1 text-center" value="1"></td><td><input type="number" class="form-control s-h2 text-center" value="0"></td><td><input type="number" class="form-control s-h3 text-center" value="0"></td><td><input type="number" class="form-control s-over3 text-center" value="0"></td><td><button class="btn btn-sm btn-danger btn-del">×</button></td></tr>
-                        <tr><td class="ps-3"><input type="text" class="form-control s-name" value="LENG CHANNLY"></td><td><input type="number" class="form-control s-m30 text-center" value="5"></td><td><input type="number" class="form-control s-h1 text-center" value="1"></td><td><input type="number" class="form-control s-h2 text-center" value="0"></td><td><input type="number" class="form-control s-h3 text-center" value="0"></td><td><input type="number" class="form-control s-over3 text-center" value="0"></td><td><button class="btn btn-sm btn-danger btn-del">×</button></td></tr>
-                        <tr><td class="ps-3"><input type="text" class="form-control s-name" value="I CHHENGKHEANG"></td><td><input type="number" class="form-control s-m30 text-center" value="4"></td><td><input type="number" class="form-control s-h1 text-center" value="0"></td><td><input type="number" class="form-control s-h2 text-center" value="1"></td><td><input type="number" class="form-control s-h3 text-center" value="0"></td><td><input type="number" class="form-control s-over3 text-center" value="1"></td><td><button class="btn btn-sm btn-danger btn-del">×</button></td></tr>
-                        <tr><td class="ps-3"><input type="text" class="form-control s-name" value="NHEAN PISETH"></td><td><input type="number" class="form-control s-m30 text-center" value="4"></td><td><input type="number" class="form-control s-h1 text-center" value="0"></td><td><input type="number" class="form-control s-h2 text-center" value="0"></td><td><input type="number" class="form-control s-h3 text-center" value="0"></td><td><input type="number" class="form-control s-over3 text-center" value="0"></td><td><button class="btn btn-sm btn-danger btn-del">×</button></td></tr>
-                        <tr><td class="ps-3"><input type="text" class="form-control s-name" value="CHUM SOVANNVISAL"></td><td><input type="number" class="form-control s-m30 text-center" value="2"></td><td><input type="number" class="form-control s-h1 text-center" value="0"></td><td><input type="number" class="form-control s-h2 text-center" value="0"></td><td><input type="number" class="form-control s-h3 text-center" value="0"></td><td><input type="number" class="form-control s-over3 text-center" value="0"></td><td><button class="btn btn-sm btn-danger btn-del">×</button></td></tr>
-                        <tr><td class="ps-3"><input type="text" class="form-control s-name" value="MAK BUN LEANG"></td><td><input type="number" class="form-control s-m30 text-center" value="1"></td><td><input type="number" class="form-control s-h1 text-center" value="0"></td><td><input type="number" class="form-control s-h2 text-center" value="0"></td><td><input type="number" class="form-control s-h3 text-center" value="0"></td><td><input type="number" class="form-control s-over3 text-center" value="1"></td><td><button class="btn btn-sm btn-danger btn-del">×</button></td></tr>
+                        <!-- Initial 9 rows -->
+                        <tr><td class="ps-3"><input type="text" class="form-control s-name" value="LONG TOKA"></td><td><input type="number" class="form-control s-m30 text-center" value="26"></td><td><input type="number" class="form-control s-h1 text-center" value="2"></td><td><input type="number" class="form-control s-h2 text-center" value="1"></td><td><input type="number" class="form-control s-h3 text-center" value="0"></td><td><input type="number" class="form-control s-over3 text-center" value="0"></td><td><span class="row-total fw-bold text-info">29</span></td><td><button class="btn btn-sm btn-danger btn-del">×</button></td></tr>
+                        <tr><td class="ps-3"><input type="text" class="form-control s-name" value="KORRY MUHAMMADSOFEK"></td><td><input type="number" class="form-control s-m30 text-center" value="21"></td><td><input type="number" class="form-control s-h1 text-center" value="2"></td><td><input type="number" class="form-control s-h2 text-center" value="1"></td><td><input type="number" class="form-control s-h3 text-center" value="0"></td><td><input type="number" class="form-control s-over3 text-center" value="0"></td><td><span class="row-total fw-bold text-info">24</span></td><td><button class="btn btn-sm btn-danger btn-del">×</button></td></tr>
+                        <tr><td class="ps-3"><input type="text" class="form-control s-name" value="OUM SENGKRUY"></td><td><input type="number" class="form-control s-m30 text-center" value="11"></td><td><input type="number" class="form-control s-h1 text-center" value="1"></td><td><input type="number" class="form-control s-h2 text-center" value="1"></td><td><input type="number" class="form-control s-h3 text-center" value="0"></td><td><input type="number" class="form-control s-over3 text-center" value="0"></td><td><span class="row-total fw-bold text-info">13</span></td><td><button class="btn btn-sm btn-danger btn-del">×</button></td></tr>
+                        <tr><td class="ps-3"><input type="text" class="form-control s-name" value="POV PUNLORK"></td><td><input type="number" class="form-control s-m30 text-center" value="6"></td><td><input type="number" class="form-control s-h1 text-center" value="1"></td><td><input type="number" class="form-control s-h2 text-center" value="0"></td><td><input type="number" class="form-control s-h3 text-center" value="0"></td><td><input type="number" class="form-control s-over3 text-center" value="0"></td><td><span class="row-total fw-bold text-info">7</span></td><td><button class="btn btn-sm btn-danger btn-del">×</button></td></tr>
+                        <tr><td class="ps-3"><input type="text" class="form-control s-name" value="LENG CHANNLY"></td><td><input type="number" class="form-control s-m30 text-center" value="5"></td><td><input type="number" class="form-control s-h1 text-center" value="1"></td><td><input type="number" class="form-control s-h2 text-center" value="0"></td><td><input type="number" class="form-control s-h3 text-center" value="0"></td><td><input type="number" class="form-control s-over3 text-center" value="0"></td><td><span class="row-total fw-bold text-info">6</span></td><td><button class="btn btn-sm btn-danger btn-del">×</button></td></tr>
+                        <tr><td class="ps-3"><input type="text" class="form-control s-name" value="I CHHENGKHEANG"></td><td><input type="number" class="form-control s-m30 text-center" value="4"></td><td><input type="number" class="form-control s-h1 text-center" value="0"></td><td><input type="number" class="form-control s-h2 text-center" value="1"></td><td><input type="number" class="form-control s-h3 text-center" value="0"></td><td><input type="number" class="form-control s-over3 text-center" value="1"></td><td><span class="row-total fw-bold text-info">6</span></td><td><button class="btn btn-sm btn-danger btn-del">×</button></td></tr>
+                        <tr><td class="ps-3"><input type="text" class="form-control s-name" value="NHEAN PISETH"></td><td><input type="number" class="form-control s-m30 text-center" value="4"></td><td><input type="number" class="form-control s-h1 text-center" value="0"></td><td><input type="number" class="form-control s-h2 text-center" value="0"></td><td><input type="number" class="form-control s-h3 text-center" value="0"></td><td><input type="number" class="form-control s-over3 text-center" value="0"></td><td><span class="row-total fw-bold text-info">4</span></td><td><button class="btn btn-sm btn-danger btn-del">×</button></td></tr>
+                        <tr><td class="ps-3"><input type="text" class="form-control s-name" value="CHUM SOVANNVISAL"></td><td><input type="number" class="form-control s-m30 text-center" value="2"></td><td><input type="number" class="form-control s-h1 text-center" value="0"></td><td><input type="number" class="form-control s-h2 text-center" value="0"></td><td><input type="number" class="form-control s-h3 text-center" value="0"></td><td><input type="number" class="form-control s-over3 text-center" value="0"></td><td><span class="row-total fw-bold text-info">2</span></td><td><button class="btn btn-sm btn-danger btn-del">×</button></td></tr>
+                        <tr><td class="ps-3"><input type="text" class="form-control s-name" value="MAK BUN LEANG"></td><td><input type="number" class="form-control s-m30 text-center" value="1"></td><td><input type="number" class="form-control s-h1 text-center" value="0"></td><td><input type="number" class="form-control s-h2 text-center" value="0"></td><td><input type="number" class="form-control s-h3 text-center" value="0"></td><td><input type="number" class="form-control s-over3 text-center" value="1"></td><td><span class="row-total fw-bold text-info">2</span></td><td><button class="btn btn-sm btn-danger btn-del">×</button></td></tr>
                     </tbody>
+                    <tfoot id="staffTfoot">
+                        <tr>
+                            <td class="text-start ps-3 text-info fw-bold">TOTAL CASES</td>
+                            <td id="foot-m30" class="text-success fw-bold">0</td>
+                            <td id="foot-h1" class="text-warning fw-bold">0</td>
+                            <td id="foot-h2" class="text-warning fw-bold">0</td>
+                            <td id="foot-h3" class="text-danger fw-bold">0</td>
+                            <td id="foot-over3" class="text-danger fw-bold">0</td>
+                            <td><span id="foot-grand" class="badge-total">0</span></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
                 </table>
+            </div>
+        </div>
+        <!-- Total Case Summary Bar Below Table -->
+        <div class="d-flex justify-content-between align-items-center py-3 px-4" style="background-color: #090e1a; border-top: 1px solid #22324e;">
+            <div class="d-flex gap-3 align-items-center">
+                <span class="text-secondary small fw-bold">TOTAL ENGINEERS: <span id="summaryStaffCount" class="text-white">9</span></span>
+                <span class="text-secondary small fw-bold">•</span>
+                <span class="text-secondary small fw-bold">SUB-30M SLA RATE: <span id="summarySlaRate" class="text-success">0%</span></span>
+            </div>
+            <div class="fs-6 fw-bold text-white">
+                TOTAL RESOLVED CASES: <span id="summaryGrandTotal" class="text-info fs-5 ps-1">0</span>
             </div>
         </div>
     </div>
@@ -170,6 +269,50 @@
 </div>
 
 <script>
+    function calculateTotals() {
+        let sumM30 = 0, sumH1 = 0, sumH2 = 0, sumH3 = 0, sumOver3 = 0, grandTotal = 0;
+        const rows = document.querySelectorAll('#staffTbody tr');
+        let count = 0;
+
+        rows.forEach(row => {
+            const name = row.querySelector('.s-name').value.trim();
+            if (name) count++;
+            const m30 = parseInt(row.querySelector('.s-m30').value) || 0;
+            const h1 = parseInt(row.querySelector('.s-h1').value) || 0;
+            const h2 = parseInt(row.querySelector('.s-h2').value) || 0;
+            const h3 = parseInt(row.querySelector('.s-h3').value) || 0;
+            const over3 = parseInt(row.querySelector('.s-over3').value) || 0;
+            const rowTotal = m30 + h1 + h2 + h3 + over3;
+
+            const rowTotEl = row.querySelector('.row-total');
+            if (rowTotEl) rowTotEl.innerText = rowTotal;
+
+            sumM30 += m30;
+            sumH1 += h1;
+            sumH2 += h2;
+            sumH3 += h3;
+            sumOver3 += over3;
+            grandTotal += rowTotal;
+        });
+
+        // Update footer row values
+        document.getElementById('foot-m30').innerText = sumM30;
+        document.getElementById('foot-h1').innerText = sumH1;
+        document.getElementById('foot-h2').innerText = sumH2;
+        document.getElementById('foot-h3').innerText = sumH3;
+        document.getElementById('foot-over3').innerText = sumOver3;
+        document.getElementById('foot-grand').innerText = grandTotal;
+
+        // Update summary box below
+        document.getElementById('summaryStaffCount').innerText = count;
+        document.getElementById('summaryGrandTotal').innerText = grandTotal;
+        const slaRate = grandTotal > 0 ? ((sumM30 / grandTotal) * 100).toFixed(1) + '%' : '0.0%';
+        document.getElementById('summarySlaRate').innerText = slaRate;
+    }
+
+    // Recalculate on any input in the table
+    document.getElementById('staffTbody').addEventListener('input', calculateTotals);
+
     document.getElementById('btnAddStaff').addEventListener('click', function() {
         const tbody = document.getElementById('staffTbody');
         const tr = document.createElement('tr');
@@ -180,16 +323,23 @@
             <td><input type="number" class="form-control s-h2 text-center" value="0"></td>
             <td><input type="number" class="form-control s-h3 text-center" value="0"></td>
             <td><input type="number" class="form-control s-over3 text-center" value="0"></td>
+            <td><span class="row-total fw-bold text-info">0</span></td>
             <td><button class="btn btn-sm btn-danger btn-del">×</button></td>
         `;
         tbody.appendChild(tr);
+        calculateTotals();
     });
 
     document.getElementById('staffTbody').addEventListener('click', function(e) {
         if (e.target && e.target.classList.contains('btn-del')) {
             e.target.closest('tr').remove();
+            calculateTotals();
         }
     });
+
+    // Initial calculation on load
+    document.addEventListener('DOMContentLoaded', calculateTotals);
+    calculateTotals();
 
     document.getElementById('btnExport').addEventListener('click', async function() {
         const btn = document.getElementById('btnExport');
