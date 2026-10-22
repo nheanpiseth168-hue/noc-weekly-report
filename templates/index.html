@@ -56,7 +56,6 @@
         .btn-outline-secondary { border-color: #334155; color: #94a3b8; }
         .btn-outline-secondary:hover { background-color: #334155; color: #f8fafc; }
 
-        /* Fix table styling and remove white background */
         .table { 
             color: #f8fafc !important; 
             vertical-align: middle; 
@@ -129,7 +128,7 @@
         </div>
     </div>
 
-    <!-- 2. Staff KPI Breakdown with Dark Background & Real-Time Totals -->
+    <!-- 2. Staff KPI Breakdown -->
     <div class="card shadow-sm">
         <div class="card-header d-flex justify-content-between align-items-center">
             <span>2. Staff Roster & SLA Resolution Breakdown</span>
@@ -151,7 +150,6 @@
                         </tr>
                     </thead>
                     <tbody id="staffTbody">
-                        <!-- Initial 9 rows -->
                         <tr><td class="ps-3"><input type="text" class="form-control s-name" value="LONG TOKA"></td><td><input type="number" class="form-control s-m30 text-center" value="26"></td><td><input type="number" class="form-control s-h1 text-center" value="2"></td><td><input type="number" class="form-control s-h2 text-center" value="1"></td><td><input type="number" class="form-control s-h3 text-center" value="0"></td><td><input type="number" class="form-control s-over3 text-center" value="0"></td><td><span class="row-total fw-bold text-info">29</span></td><td><button class="btn btn-sm btn-danger btn-del">×</button></td></tr>
                         <tr><td class="ps-3"><input type="text" class="form-control s-name" value="KORRY MUHAMMADSOFEK"></td><td><input type="number" class="form-control s-m30 text-center" value="21"></td><td><input type="number" class="form-control s-h1 text-center" value="2"></td><td><input type="number" class="form-control s-h2 text-center" value="1"></td><td><input type="number" class="form-control s-h3 text-center" value="0"></td><td><input type="number" class="form-control s-over3 text-center" value="0"></td><td><span class="row-total fw-bold text-info">24</span></td><td><button class="btn btn-sm btn-danger btn-del">×</button></td></tr>
                         <tr><td class="ps-3"><input type="text" class="form-control s-name" value="OUM SENGKRUY"></td><td><input type="number" class="form-control s-m30 text-center" value="11"></td><td><input type="number" class="form-control s-h1 text-center" value="1"></td><td><input type="number" class="form-control s-h2 text-center" value="1"></td><td><input type="number" class="form-control s-h3 text-center" value="0"></td><td><input type="number" class="form-control s-over3 text-center" value="0"></td><td><span class="row-total fw-bold text-info">13</span></td><td><button class="btn btn-sm btn-danger btn-del">×</button></td></tr>
@@ -177,7 +175,6 @@
                 </table>
             </div>
         </div>
-        <!-- Total Case Summary Bar Below Table -->
         <div class="d-flex justify-content-between align-items-center py-3 px-4" style="background-color: #090e1a; border-top: 1px solid #22324e;">
             <div class="d-flex gap-3 align-items-center">
                 <span class="text-secondary small fw-bold">TOTAL ENGINEERS: <span id="summaryStaffCount" class="text-white">9</span></span>
@@ -275,13 +272,15 @@
         let count = 0;
 
         rows.forEach(row => {
-            const name = row.querySelector('.s-name').value.trim();
+            const nameEl = row.querySelector('.s-name');
+            const name = nameEl ? nameEl.value.trim() : '';
             if (name) count++;
-            const m30 = parseInt(row.querySelector('.s-m30').value) || 0;
-            const h1 = parseInt(row.querySelector('.s-h1').value) || 0;
-            const h2 = parseInt(row.querySelector('.s-h2').value) || 0;
-            const h3 = parseInt(row.querySelector('.s-h3').value) || 0;
-            const over3 = parseInt(row.querySelector('.s-over3').value) || 0;
+
+            const m30 = parseInt(row.querySelector('.s-m30')?.value) || 0;
+            const h1 = parseInt(row.querySelector('.s-h1')?.value) || 0;
+            const h2 = parseInt(row.querySelector('.s-h2')?.value) || 0;
+            const h3 = parseInt(row.querySelector('.s-h3')?.value) || 0;
+            const over3 = parseInt(row.querySelector('.s-over3')?.value) || 0;
             const rowTotal = m30 + h1 + h2 + h3 + over3;
 
             const rowTotEl = row.querySelector('.row-total');
@@ -295,22 +294,19 @@
             grandTotal += rowTotal;
         });
 
-        // Update footer row values
-        document.getElementById('foot-m30').innerText = sumM30;
-        document.getElementById('foot-h1').innerText = sumH1;
-        document.getElementById('foot-h2').innerText = sumH2;
-        document.getElementById('foot-h3').innerText = sumH3;
-        document.getElementById('foot-over3').innerText = sumOver3;
-        document.getElementById('foot-grand').innerText = grandTotal;
+        const fM30 = document.getElementById('foot-m30'); if (fM30) fM30.innerText = sumM30;
+        const fH1 = document.getElementById('foot-h1'); if (fH1) fH1.innerText = sumH1;
+        const fH2 = document.getElementById('foot-h2'); if (fH2) fH2.innerText = sumH2;
+        const fH3 = document.getElementById('foot-h3'); if (fH3) fH3.innerText = sumH3;
+        const fO3 = document.getElementById('foot-over3'); if (fO3) fO3.innerText = sumOver3;
+        const fGr = document.getElementById('foot-grand'); if (fGr) fGr.innerText = grandTotal;
 
-        // Update summary box below
-        document.getElementById('summaryStaffCount').innerText = count;
-        document.getElementById('summaryGrandTotal').innerText = grandTotal;
+        const sCount = document.getElementById('summaryStaffCount'); if (sCount) sCount.innerText = count;
+        const sGrand = document.getElementById('summaryGrandTotal'); if (sGrand) sGrand.innerText = grandTotal;
         const slaRate = grandTotal > 0 ? ((sumM30 / grandTotal) * 100).toFixed(1) + '%' : '0.0%';
-        document.getElementById('summarySlaRate').innerText = slaRate;
+        const sSla = document.getElementById('summarySlaRate'); if (sSla) sSla.innerText = slaRate;
     }
 
-    // Recalculate on any input in the table
     document.getElementById('staffTbody').addEventListener('input', calculateTotals);
 
     document.getElementById('btnAddStaff').addEventListener('click', function() {
@@ -337,7 +333,6 @@
         }
     });
 
-    // Initial calculation on load
     document.addEventListener('DOMContentLoaded', calculateTotals);
     calculateTotals();
 
@@ -348,63 +343,69 @@
 
         const staff = [];
         document.querySelectorAll('#staffTbody tr').forEach(row => {
-            const name = row.querySelector('.s-name').value.trim();
+            const name = row.querySelector('.s-name')?.value?.trim() || '';
             if (name) {
                 staff.push({
                     name: name,
-                    m30: parseInt(row.querySelector('.s-m30').value) || 0,
-                    h1: parseInt(row.querySelector('.s-h1').value) || 0,
-                    h2: parseInt(row.querySelector('.s-h2').value) || 0,
-                    h3: parseInt(row.querySelector('.s-h3').value) || 0,
-                    over3: parseInt(row.querySelector('.s-over3').value) || 0
+                    m30: parseInt(row.querySelector('.s-m30')?.value) || 0,
+                    h1: parseInt(row.querySelector('.s-h1')?.value) || 0,
+                    h2: parseInt(row.querySelector('.s-h2')?.value) || 0,
+                    h3: parseInt(row.querySelector('.s-h3')?.value) || 0,
+                    over3: parseInt(row.querySelector('.s-over3')?.value) || 0
                 });
             }
         });
 
         const payload = {
-            teamName: document.getElementById('teamName').value.trim(),
-            assignedTeam: document.getElementById('assignedTeam').value.trim(),
-            reportPeriod: document.getElementById('reportPeriod').value.trim(),
-            criticalIncidents: document.getElementById('criticalIncidents').value.trim(),
+            teamName: document.getElementById('teamName')?.value?.trim() || 'Team 1',
+            assignedTeam: document.getElementById('assignedTeam')?.value?.trim() || 'Team Alpha',
+            reportPeriod: document.getElementById('reportPeriod')?.value?.trim() || 'Week 42',
+            criticalIncidents: document.getElementById('criticalIncidents')?.value?.trim() || '0',
             roles: {
-                mainSuper: document.getElementById('mainSuper').value.trim(),
-                backupSuper: document.getElementById('backupSuper').value.trim(),
-                hq01: document.getElementById('hq01').value.trim(),
-                hq02: document.getElementById('hq02').value.trim(),
-                hq03: document.getElementById('hq03').value.trim(),
-                hq04: document.getElementById('hq04').value.trim(),
-                monitoringLead: document.getElementById('monitoringLead').value.trim(),
-                monitoringBackup: document.getElementById('monitoringBackup').value.trim(),
-                amisReport: document.getElementById('amisReport').value.trim(),
-                internalQueue: document.getElementById('internalQueue').value.trim()
+                mainSuper: document.getElementById('mainSuper')?.value?.trim() || '',
+                backupSuper: document.getElementById('backupSuper')?.value?.trim() || '',
+                hq01: document.getElementById('hq01')?.value?.trim() || '',
+                hq02: document.getElementById('hq02')?.value?.trim() || '',
+                hq03: document.getElementById('hq03')?.value?.trim() || '',
+                hq04: document.getElementById('hq04')?.value?.trim() || '',
+                monitoringLead: document.getElementById('monitoringLead')?.value?.trim() || '',
+                monitoringBackup: document.getElementById('monitoringBackup')?.value?.trim() || '',
+                amisReport: document.getElementById('amisReport')?.value?.trim() || '',
+                internalQueue: document.getElementById('internalQueue')?.value?.trim() || ''
             },
             platform: {
-                portal: document.getElementById('toolPortal').value.trim(),
-                amis: document.getElementById('toolAmis').value.trim(),
-                billing: document.getElementById('toolBilling').value.trim(),
-                rt: document.getElementById('toolRt').value.trim()
+                portal: document.getElementById('toolPortal')?.value?.trim() || '',
+                amis: document.getElementById('toolAmis')?.value?.trim() || '',
+                billing: document.getElementById('toolBilling')?.value?.trim() || '',
+                rt: document.getElementById('toolRt')?.value?.trim() || ''
             },
             staff: staff
         };
 
+        console.log('Sending payload to server:', payload);
+
         try {
-            const response = await fetch('/export-pptx', {
+            const response = await fetch('/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
 
-            if (!response.ok) throw new Error('Generation failed');
+            if (!response.ok) throw new Error('HTTP ' + response.status);
 
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `Weekly_Report_${payload.teamName.replace(/\s+/g, '_')}.pptx`;
+            // Append timestamp to prevent opening older cached files
+            const now = new Date();
+            const timeStr = String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0') + String(now.getSeconds()).padStart(2, '0');
+            a.download = `Weekly_Report_${payload.teamName.replace(/\s+/g, '_')}_${timeStr}.pptx`;
             document.body.appendChild(a);
             a.click();
             a.remove();
         } catch (err) {
+            console.error(err);
             alert('Failed to generate presentation: ' + err.message);
         } finally {
             btn.disabled = false;
