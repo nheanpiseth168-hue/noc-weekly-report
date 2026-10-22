@@ -98,7 +98,6 @@ def generate_presentation(payload):
     sla_rate = f"{(t30 / grand_total * 100):.1f}%" if grand_total > 0 else "0.0%"
     active_count = len(processed_staff)
 
-    # Use exact user string without 'or' overrides (allows clearing/deleting)
     main_super = roles["mainSuper"].strip() if ("mainSuper" in roles and roles["mainSuper"] is not None) else "MAK BUN LEANG"
     backup_super = roles["backupSuper"].strip() if ("backupSuper" in roles and roles["backupSuper"] is not None) else "POV PUNLORK"
     hq01 = roles["hq01"].strip() if ("hq01" in roles and roles["hq01"] is not None) else "MAK BUN LEANG"
@@ -106,9 +105,10 @@ def generate_presentation(payload):
     hq03 = roles["hq03"].strip() if ("hq03" in roles and roles["hq03"] is not None) else "CHUM SOVANNVISAL"
     hq04 = roles["hq04"].strip() if ("hq04" in roles and roles["hq04"] is not None) else "NHEAN P. / OUM S. / I CHHENGKHEANG"
 
-    mon_lead = roles["monitoringLead"].strip() if ("monitoringLead" in roles and roles["monitoringLead"] is not None) else "LONG TOKA"
-    mon_backup = roles["monitoringBackup"].strip() if ("monitoringBackup" in roles and roles["monitoringBackup"] is not None) else "KORRY MUHAMMADSOFEK"
-    amis_rep = roles["amisReport"].strip() if ("amisReport" in roles and roles["amisReport"] is not None) else "NHEAN P. / OUM S. / I CHHENGKHEANG"
+    # Dynamic mapping: monitoringLead = SIM Support, monitoringBackup = AMIS Support, amisReport = Backup AMIS Support
+    sim_support = roles["monitoringLead"].strip() if ("monitoringLead" in roles and roles["monitoringLead"] is not None) else "LONG TOKA"
+    amis_support = roles["monitoringBackup"].strip() if ("monitoringBackup" in roles and roles["monitoringBackup"] is not None) else "KORRY MUHAMMADSOFEK"
+    backup_amis = roles["amisReport"].strip() if ("amisReport" in roles and roles["amisReport"] is not None) else "NHEAN P. / OUM S. / I CHHENGKHEANG"
     int_queue = roles["internalQueue"].strip() if ("internalQueue" in roles and roles["internalQueue"] is not None) else "LENG CHANNLY / Team Roster"
 
     prs = Presentation()
@@ -350,14 +350,14 @@ def generate_presentation(payload):
     p = tf_l2.add_paragraph(); p.text = backup_super if backup_super else "-"; p.space_before = Pt(6); set_run_font(p, 22, True, BLACK)
     p = tf_l2.add_paragraph(); p.text = "Standby supervisor to manage queue escalations during supervisor absence or high ticket load."; p.space_before = Pt(14); set_run_font(p, 12, False, BLACK)
 
-    # Slide 10: Dispatch Stations & Reports (Dynamic: Omit Deleted Items Cleanly)
+    # Slide 10: Dispatch Stations & Reports (Updated Titles: SIM Support, AMIS Support, Backup AMIS Support)
     s10 = prs.slides.add_slide(blank)
     add_header(s10, "SECTION V • Dispatch Stations & Roster", f"{team_name}: Support Role Stations & Daily Reports", "Workstation assignments and daily status reporting distribution", "Daily Rotation Active")
     st1 = s10.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(2.0), Inches(5.6), Inches(4.5))
     st1.fill.solid(); st1.fill.fore_color.rgb = LIGHT_CARD; st1.line.color.rgb = BORDER
     tf_st1 = st1.text_frame; tf_st1.word_wrap = True
     p = tf_st1.paragraphs[0]; p.text = "External Stations (HQ)"; set_run_font(p, 16, True, NAVY)
-    p = tf_st1.add_paragraph(); p.text = "Direct client-facing response"; set_run_font(p, 11, False, GRAY)
+    p = tf_st1.add_paragraph(); p.text = "Direct client-facing response(Email/Telegram/WeChat/WhatsApp/Portal)"; set_run_font(p, 11, False, GRAY)
 
     st1_lines = []
     if hq01: st1_lines.append(f"HQ01: {hq01}")
@@ -376,12 +376,12 @@ def generate_presentation(payload):
     p = tf_st2.paragraphs[0]; p.text = "Internal Support & Reports"; set_run_font(p, 16, True, NAVY)
     p = tf_st2.add_paragraph(); p.text = "Shift monitoring & AMIS handling"; set_run_font(p, 11, False, GRAY)
 
-    # Build internal lines dynamically based ONLY on non-empty inputs
+    # Use the new role labels
     st2_lines = []
-    if mon_lead: st2_lines.append(f"Monitoring Lead: {mon_lead}")
-    if mon_backup: st2_lines.append(f"Monitoring Backup: {mon_backup}")
-    if amis_rep: st2_lines.append(f"AMIS Reports: {amis_rep}")
-    if int_queue: st2_lines.append(f"Internal Queue: {int_queue}")
+    if sim_support:  st2_lines.append(f"SIM Support: {sim_support}")
+    if amis_support: st2_lines.append(f"AMIS Support: {amis_support}")
+    if backup_amis:  st2_lines.append(f"Backup AMIS Support: {backup_amis}")
+    if int_queue:    st2_lines.append(f"Internal Queue: {int_queue}")
 
     p = tf_st2.add_paragraph(); p.space_before = Pt(10)
     p.text = "\n".join(st2_lines) if st2_lines else "No internal assignments."

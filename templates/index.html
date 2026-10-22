@@ -227,15 +227,15 @@
                 <input type="text" id="hq04" class="form-control db-input" value="NHEAN P. / OUM S. / I CHHENGKHEANG">
             </div>
             <div class="col-md-3">
-                <label class="form-label">Monitoring Lead</label>
+                <label class="form-label">SIM Support</label>
                 <input type="text" id="monitoringLead" class="form-control db-input" value="LONG TOKA">
             </div>
             <div class="col-md-3">
-                <label class="form-label">Monitoring Backup</label>
+                <label class="form-label">AMIS Support</label>
                 <input type="text" id="monitoringBackup" class="form-control db-input" value="KORRY MUHAMMADSOFEK">
             </div>
             <div class="col-md-3">
-                <label class="form-label">AMIS Reports</label>
+                <label class="form-label">Backup AMIS Support</label>
                 <input type="text" id="amisReport" class="form-control db-input" value="NHEAN P. / OUM S. / I CHHENGKHEANG">
             </div>
             <div class="col-md-3">
@@ -443,7 +443,6 @@
         calculateTotals();
     }
 
-    // Auto-save listeners on all form inputs
     document.querySelectorAll('.db-input').forEach(input => {
         input.addEventListener('input', saveToDatabase);
     });
@@ -495,17 +494,14 @@
         reader.readAsText(file);
     });
 
-    // Load saved database on page startup
     document.addEventListener('DOMContentLoaded', loadFromDatabase);
 
-    // Export to PPTX
     document.getElementById('btnExport').addEventListener('click', async function() {
         const btn = document.getElementById('btnExport');
         btn.disabled = true;
         btn.innerText = 'Generating PPTX...';
 
         const payload = getCurrentState();
-        // Exclude completely blank rows
         payload.staff = payload.staff.filter(s => s.name && s.name.trim() !== '');
 
         try {
