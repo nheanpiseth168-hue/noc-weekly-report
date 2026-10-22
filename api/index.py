@@ -1,6 +1,6 @@
 ﻿import io
 import os
-from flask import Flask, render_template, request, send_file, redirect, session
+from flask import Flask, render_template, request, send_file, redirect, session, make_response
 from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
@@ -436,7 +436,16 @@ def generate_presentation(payload):
     filename = f"Weekly_Report_{team_name.replace(' ', '_')}.pptx"
     return send_file(output, as_attachment=True, download_name=filename, mimetype="application/vnd.openxmlformats-officedocument.presentationml.presentation")
 
-def handle_login():
+def perform_logout():
+    session.clear()
+    session.pop("logged_in", None)
+    session.pop("user", None)
+    session.modified = True
+    resp = make_response(render_template("login.html", message="You have been signed out successfully."))
+    resp.delete_cookie(app.config.get("SESSION_COOKIE_NAME", "session"))
+    return resp
+
+def perform_login():
     error = None
     if request.method == "POST":
         user = request.form.get("username", "").strip()
@@ -444,39 +453,32 @@ def handle_login():
         if user == ADMIN_USERNAME and pwd == ADMIN_PASSWORD:
             session["logged_in"] = True
             session["user"] = user
+            session.modified = True
             return redirect("/")
         error = "Invalid username or password"
     return render_template("login.html", error=error)
 
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/")
-
 @app.route("/", defaults={"path": ""}, methods=["GET", "POST"])
 @app.route("/<path:path>", methods=["GET", "POST"])
 def catch_all(path):
-    orig = (request.headers.get("x-matched-path") or request.headers.get("x-forwarded-uri") or request.path or "").lower()
-    
-    if "logout" in orig or path.lower().endswith("logout"):
-        return logout()
+    # 1. Check for logout via query parameter or path
+    if request.args.get("action") == "logout" or request.args.get("logout") is not None or "logout" in path.lower():
+        return perform_logout()
 
-    # If already logged in
+    # 2. If logged in, handle report generation (POST) or display dashboard (GET)
     if session.get("logged_in"):
-        if "login" in orig or path.lower().endswith("login"):
-            return redirect("/")
         if request.method == "POST" or "export" in path:
             payload = request.get_json(silent=True) or {}
             return generate_presentation(payload)
         return render_template("index.html")
 
-    # Not logged in: handle login submission or directly render login page (ZERO 302 redirects)
+    # 3. Not logged in: process login credentials (POST) or render login page (GET)
     if request.method == "POST":
         if request.form.get("username") and request.form.get("password"):
-            return handle_login()
+            return perform_login()
         return {"error": "Unauthorized"}, 401
 
-    return handle_login()
+    return perform_login()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
