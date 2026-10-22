@@ -93,13 +93,16 @@
 </head>
 <body>
 <div class="container mt-4" style="max-width: 1050px;">
-    <!-- Top Header -->
+    <!-- Top Header with Logout -->
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
             <h2 class="fw-bold text-white mb-0">NOC Weekly Report Generator</h2>
             <p class="text-secondary mb-0">Live database editor with instant PowerPoint sync</p>
         </div>
-        <button id="btnExport" class="btn btn-primary btn-lg shadow">Export to PowerPoint (.PPTX)</button>
+        <div class="d-flex gap-2">
+            <button id="btnExport" class="btn btn-primary btn-lg shadow">Export to PowerPoint (.PPTX)</button>
+            <a href="/logout" class="btn btn-outline-danger btn-lg shadow" title="Sign Out">Logout</a>
+        </div>
     </div>
 
     <!-- Database Controls Bar -->

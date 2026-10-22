@@ -1,6 +1,6 @@
 ﻿import io
 import os
-from flask import Flask, render_template, request, send_file
+from flask import Flask, render_template, request, send_file, redirect, url_for, session
 from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
@@ -14,6 +14,11 @@ else:
     template_dir = os.path.abspath(os.path.join(base_dir, "..", "templates"))
 
 app = Flask(__name__, template_folder=template_dir)
+app.secret_key = os.environ.get("SECRET_KEY", "noc-weekly-secure-secret-2026")
+
+# Configure Login Credentials
+ADMIN_USERNAME = os.environ.get("NOC_USER", "mkn-noc")
+ADMIN_PASSWORD = os.environ.get("NOC_PASS", "Mkn@123456")
 
 BLACK      = RGBColor(0, 0, 0)
 NAVY       = RGBColor(15, 23, 42)
@@ -105,7 +110,6 @@ def generate_presentation(payload):
     hq03 = roles["hq03"].strip() if ("hq03" in roles and roles["hq03"] is not None) else "CHUM SOVANNVISAL"
     hq04 = roles["hq04"].strip() if ("hq04" in roles and roles["hq04"] is not None) else "NHEAN P. / OUM S. / I CHHENGKHEANG"
 
-    # Dynamic mapping: monitoringLead = SIM Support, monitoringBackup = AMIS Support, amisReport = Backbone Monitoring
     sim_support = roles["monitoringLead"].strip() if ("monitoringLead" in roles and roles["monitoringLead"] is not None) else "LONG TOKA"
     amis_support = roles["monitoringBackup"].strip() if ("monitoringBackup" in roles and roles["monitoringBackup"] is not None) else "KORRY MUHAMMADSOFEK"
     backup_amis = roles["amisReport"].strip() if ("amisReport" in roles and roles["amisReport"] is not None) else "NHEAN P. / OUM S. / I CHHENGKHEANG"
@@ -350,14 +354,14 @@ def generate_presentation(payload):
     p = tf_l2.add_paragraph(); p.text = backup_super if backup_super else "-"; p.space_before = Pt(6); set_run_font(p, 22, True, BLACK)
     p = tf_l2.add_paragraph(); p.text = "Standby supervisor to manage queue escalations during supervisor absence or high ticket load."; p.space_before = Pt(14); set_run_font(p, 12, False, BLACK)
 
-    # Slide 10: Dispatch Stations & Reports (Updated Titles: SIM Support, AMIS Support, Backbone Monitoring)
+    # Slide 10: Dispatch Stations & Reports
     s10 = prs.slides.add_slide(blank)
     add_header(s10, "SECTION V • Dispatch Stations & Roster", f"{team_name}: Support Role Stations & Daily Reports", "Workstation assignments and daily status reporting distribution", "Daily Rotation Active")
     st1 = s10.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(2.0), Inches(5.6), Inches(4.5))
     st1.fill.solid(); st1.fill.fore_color.rgb = LIGHT_CARD; st1.line.color.rgb = BORDER
     tf_st1 = st1.text_frame; tf_st1.word_wrap = True
     p = tf_st1.paragraphs[0]; p.text = "External Stations (HQ)"; set_run_font(p, 16, True, NAVY)
-    p = tf_st1.add_paragraph(); p.text = "Direct client-facing response(Email/Telegram/WeChat/WhatsApp/Portal)"; set_run_font(p, 11, False, GRAY)
+    p = tf_st1.add_paragraph(); p.text = "Direct client-facing response (Email / Telegram / WeChat / WhatsApp / Portal)"; set_run_font(p, 10.5, False, GRAY)
 
     st1_lines = []
     if hq01: st1_lines.append(f"HQ01: {hq01}")
@@ -376,7 +380,6 @@ def generate_presentation(payload):
     p = tf_st2.paragraphs[0]; p.text = "Internal Support & Reports"; set_run_font(p, 16, True, NAVY)
     p = tf_st2.add_paragraph(); p.text = "Shift monitoring & AMIS handling"; set_run_font(p, 11, False, GRAY)
 
-    # Use the new role labels
     st2_lines = []
     if sim_support:  st2_lines.append(f"SIM Support: {sim_support}")
     if amis_support: st2_lines.append(f"AMIS Support: {amis_support}")
@@ -434,12 +437,41 @@ def generate_presentation(payload):
     filename = f"Weekly_Report_{team_name.replace(' ', '_')}.pptx"
     return send_file(output, as_attachment=True, download_name=filename, mimetype="application/vnd.openxmlformats-officedocument.presentationml.presentation")
 
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if session.get("logged_in"):
+        return redirect("/")
+    
+    error = None
+    if request.method == "POST":
+        user = request.form.get("username", "").strip()
+        pwd = request.form.get("password", "")
+        if user == ADMIN_USERNAME and pwd == ADMIN_PASSWORD:
+            session["logged_in"] = True
+            session["user"] = user
+            return redirect("/")
+        else:
+            error = "Invalid username or password"
+            
+    return render_template("login.html", error=error)
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/login")
+
 @app.route("/", defaults={"path": ""}, methods=["GET", "POST"])
 @app.route("/<path:path>", methods=["GET", "POST"])
 def catch_all(path):
+    if not session.get("logged_in"):
+        if request.method == "POST":
+            return {"error": "Unauthorized"}, 401
+        return redirect("/login")
+
     if request.method == "POST" or "export" in path:
         payload = request.get_json(silent=True) or {}
         return generate_presentation(payload)
+        
     return render_template("index.html")
 
 if __name__ == "__main__":
