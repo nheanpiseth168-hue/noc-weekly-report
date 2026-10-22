@@ -381,7 +381,7 @@ def generate_presentation(payload):
     if sim_support:  st2_lines.append(f"SIM Support: {sim_support}")
     if amis_support: st2_lines.append(f"AMIS Support: {amis_support}")
     if backup_amis:  st2_lines.append(f"Backbone Monitoring: {backup_amis}")
-    if int_queue:    st2_lines.append(f"Internal Queue: {int_queue}")
+    if int_queue:    st2_lines.append(f"Key Controller: {int_queue}")
 
     p = tf_st2.add_paragraph(); p.space_before = Pt(10)
     p.text = "\n".join(st2_lines) if st2_lines else "No internal assignments."
