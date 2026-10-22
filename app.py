@@ -105,7 +105,7 @@ def generate_presentation(payload):
     hq03 = roles["hq03"].strip() if ("hq03" in roles and roles["hq03"] is not None) else "CHUM SOVANNVISAL"
     hq04 = roles["hq04"].strip() if ("hq04" in roles and roles["hq04"] is not None) else "NHEAN P. / OUM S. / I CHHENGKHEANG"
 
-    # Dynamic mapping: monitoringLead = SIM Support, monitoringBackup = AMIS Support, amisReport = Backup AMIS Support
+    # Dynamic mapping: monitoringLead = SIM Support, monitoringBackup = AMIS Support, amisReport = Backbone Monitoring
     sim_support = roles["monitoringLead"].strip() if ("monitoringLead" in roles and roles["monitoringLead"] is not None) else "LONG TOKA"
     amis_support = roles["monitoringBackup"].strip() if ("monitoringBackup" in roles and roles["monitoringBackup"] is not None) else "KORRY MUHAMMADSOFEK"
     backup_amis = roles["amisReport"].strip() if ("amisReport" in roles and roles["amisReport"] is not None) else "NHEAN P. / OUM S. / I CHHENGKHEANG"
@@ -350,7 +350,7 @@ def generate_presentation(payload):
     p = tf_l2.add_paragraph(); p.text = backup_super if backup_super else "-"; p.space_before = Pt(6); set_run_font(p, 22, True, BLACK)
     p = tf_l2.add_paragraph(); p.text = "Standby supervisor to manage queue escalations during supervisor absence or high ticket load."; p.space_before = Pt(14); set_run_font(p, 12, False, BLACK)
 
-    # Slide 10: Dispatch Stations & Reports (Updated Titles: SIM Support, AMIS Support, Backup AMIS Support)
+    # Slide 10: Dispatch Stations & Reports (Updated Titles: SIM Support, AMIS Support, Backbone Monitoring)
     s10 = prs.slides.add_slide(blank)
     add_header(s10, "SECTION V • Dispatch Stations & Roster", f"{team_name}: Support Role Stations & Daily Reports", "Workstation assignments and daily status reporting distribution", "Daily Rotation Active")
     st1 = s10.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(2.0), Inches(5.6), Inches(4.5))
@@ -380,7 +380,7 @@ def generate_presentation(payload):
     st2_lines = []
     if sim_support:  st2_lines.append(f"SIM Support: {sim_support}")
     if amis_support: st2_lines.append(f"AMIS Support: {amis_support}")
-    if backup_amis:  st2_lines.append(f"Backup AMIS Support: {backup_amis}")
+    if backup_amis:  st2_lines.append(f"Backbone Monitoring: {backup_amis}")
     if int_queue:    st2_lines.append(f"Internal Queue: {int_queue}")
 
     p = tf_st2.add_paragraph(); p.space_before = Pt(10)
