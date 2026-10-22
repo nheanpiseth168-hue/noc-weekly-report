@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>NOC Weekly Report Generator</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
@@ -12,11 +12,14 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             padding-bottom: 70px; 
         }
+        .container {
+            max-width: 1100px;
+        }
         .card { 
             background-color: #151f32; 
             border: 1px solid #22324e; 
             border-radius: 12px; 
-            margin-bottom: 24px; 
+            margin-bottom: 20px; 
             overflow: hidden; 
         }
         .card-header { 
@@ -24,20 +27,22 @@
             border-bottom: 1px solid #22324e; 
             font-weight: 700; 
             color: #38bdf8; 
-            padding: 14px 20px; 
+            padding: 14px 18px; 
         }
         .form-label { 
-            font-size: 0.8rem; 
+            font-size: 0.78rem; 
             font-weight: 700; 
             color: #94a3b8; 
             text-transform: uppercase; 
             letter-spacing: 0.5px; 
+            margin-bottom: 6px;
         }
         .form-control, .form-select { 
             background-color: #090e1a !important; 
             border: 1px solid #293854 !important; 
             color: #f8fafc !important; 
             border-radius: 6px; 
+            min-height: 40px;
         }
         .form-control:focus, .form-select:focus { 
             background-color: #090e1a !important; 
@@ -49,8 +54,9 @@
             background-color: #0284c7; 
             border: none; 
             font-weight: 600; 
-            padding: 12px 28px; 
+            padding: 10px 22px; 
             border-radius: 8px; 
+            min-height: 42px;
         }
         .btn-primary:hover { background-color: #0369a1; }
         .table { 
@@ -69,11 +75,12 @@
             text-transform: uppercase; 
             border-bottom: 2px solid #22324e !important; 
             padding: 12px 8px; 
+            white-space: nowrap;
         }
         .table tbody td { 
             background-color: transparent !important; 
             border-bottom: 1px solid #1e2c44 !important; 
-            padding: 8px 8px; 
+            padding: 8px 6px; 
         }
         .table tfoot td { 
             background-color: #090e1a !important; 
@@ -81,6 +88,7 @@
             border-bottom: none !important; 
             font-weight: 700; 
             padding: 12px 8px; 
+            white-space: nowrap;
         }
         .badge-total {
             background-color: #0284c7;
@@ -89,67 +97,119 @@
             padding: 4px 10px;
             border-radius: 6px;
         }
+
+        /* Responsive Mobile Specific Rules */
+        .table-responsive {
+            -webkit-overflow-scrolling: touch;
+        }
+        #staffTable {
+            min-width: 720px; /* Guarantees table columns won't squeeze on phone screens */
+        }
+        @media (max-width: 768px) {
+            .mobile-header-actions {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            .mobile-header-actions button, 
+            .mobile-header-actions a {
+                width: 100%;
+                text-align: center;
+            }
+            .db-controls-row {
+                flex-direction: column;
+                align-items: stretch !important;
+                gap: 12px;
+            }
+            .db-controls-actions {
+                width: 100%;
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 6px;
+            }
+            .db-controls-actions button, 
+            .db-controls-actions label {
+                padding: 8px 4px;
+                font-size: 0.78rem;
+                text-align: center;
+            }
+            .swipe-hint {
+                display: block !important;
+            }
+        }
+        .swipe-hint {
+            display: none;
+            font-size: 0.75rem;
+            color: #94a3b8;
+            padding: 6px 14px;
+            background-color: #090e1a;
+            border-bottom: 1px solid #22324e;
+        }
     </style>
 </head>
 <body>
-<div class="container mt-4" style="max-width: 1050px;">
-    <!-- Top Header with Bulletproof Logout -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
+<div class="container mt-3 mt-md-4">
+    <!-- Top Header (Responsive Stack on Mobile, Row on Desktop) -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-3">
         <div>
-            <h2 class="fw-bold text-white mb-0">NOC Weekly Report Generator</h2>
-            <p class="text-secondary mb-0">Live database editor with instant PowerPoint sync</p>
+            <h2 class="fw-bold text-white mb-1 fs-3 fs-md-2">NOC Weekly Report Generator</h2>
+            <p class="text-secondary small mb-0">Responsive editor with live database & PPTX export</p>
         </div>
-        <div class="d-flex gap-2">
-            <button id="btnExport" class="btn btn-primary btn-lg shadow">Export to PowerPoint (.PPTX)</button>
-            <a href="/?action=logout" class="btn btn-outline-danger btn-lg shadow" title="Sign Out">Logout</a>
+        <div class="mobile-header-actions d-flex flex-row flex-md-row gap-2">
+            <button id="btnExport" class="btn btn-primary shadow flex-grow-1 flex-md-grow-0">Export to PowerPoint (.PPTX)</button>
+            <a href="/?action=logout" class="btn btn-outline-danger shadow" title="Sign Out">Logout</a>
         </div>
     </div>
 
-    <!-- Database Controls Bar -->
-    <div class="card p-3 mb-4 shadow-sm">
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <!-- Database Controls Bar (Grid on Mobile, Row on Desktop) -->
+    <div class="card p-3 mb-3 shadow-sm">
+        <div class="d-flex justify-content-between align-items-center flex-wrap db-controls-row">
             <div class="d-flex align-items-center gap-2">
                 <span class="badge bg-success py-2 px-3 fw-bold" id="dbStatusBadge">● DATABASE READY</span>
-                <span class="text-secondary small" id="dbStatusText">Auto-saving active (browser storage)</span>
+                <span class="text-secondary small d-none d-sm-inline" id="dbStatusText">Auto-saving active</span>
             </div>
-            <div class="d-flex gap-2">
-                <button class="btn btn-sm btn-outline-info" id="btnExportJson">💾 Backup (JSON)</button>
+            <div class="d-flex gap-2 db-controls-actions">
+                <button class="btn btn-sm btn-outline-info" id="btnExportJson">💾 Backup</button>
                 <label class="btn btn-sm btn-outline-light mb-0">
                     📂 Import <input type="file" id="importJsonInput" accept=".json" style="display:none">
                 </label>
-                <button class="btn btn-sm btn-outline-danger" id="btnReset">🔄 Reset Defaults</button>
+                <button class="btn btn-sm btn-outline-danger" id="btnReset">🔄 Reset</button>
             </div>
         </div>
     </div>
 
-    <!-- 1. Report Overview -->
+    <!-- 1. Report Overview (Responsive Columns) -->
     <div class="card shadow-sm">
         <div class="card-header">1. Report Header & Meta</div>
         <div class="card-body row g-3">
-            <div class="col-md-3">
+            <div class="col-12 col-sm-6 col-lg-3">
                 <label class="form-label">Team Name</label>
                 <input type="text" id="teamName" class="form-control db-input" value="Team 1">
             </div>
-            <div class="col-md-3">
+            <div class="col-12 col-sm-6 col-lg-3">
                 <label class="form-label">Assigned Sub-Team</label>
                 <input type="text" id="assignedTeam" class="form-control db-input" value="Team Alpha">
             </div>
-            <div class="col-md-3">
+            <div class="col-12 col-sm-6 col-lg-3">
                 <label class="form-label">Reporting Period</label>
                 <input type="text" id="reportPeriod" class="form-control db-input" value="Week 42 (Current Shift)">
             </div>
-            <div class="col-md-3">
+            <div class="col-12 col-sm-6 col-lg-3">
                 <label class="form-label">Critical Incidents</label>
                 <input type="number" id="criticalIncidents" class="form-control db-input" value="0">
             </div>
         </div>
     </div>
 
-    <!-- 2. Staff KPI Breakdown -->
+    <!-- 2. Staff KPI Breakdown (Responsive Scrollable Table) -->
     <div class="card shadow-sm">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <span>2. Staff Roster & SLA Resolution Breakdown</span>
+            <span>2. Staff Roster & SLA Breakdown</span>
             <button id="btnAddStaff" type="button" class="btn btn-sm btn-outline-secondary">+ Add Engineer</button>
+        </div>
+        <div class="swipe-hint">
+            ⇄ Swipe horizontally to inspect all SLA columns on mobile/tablet
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -182,14 +242,15 @@
                 </table>
             </div>
         </div>
-        <div class="d-flex justify-content-between align-items-center py-3 px-4" style="background-color: #090e1a; border-top: 1px solid #22324e;">
-            <div class="d-flex gap-3 align-items-center">
-                <span class="text-secondary small fw-bold">TOTAL ENGINEERS: <span id="summaryStaffCount" class="text-white">0</span></span>
-                <span class="text-secondary small fw-bold">•</span>
-                <span class="text-secondary small fw-bold">SUB-30M SLA RATE: <span id="summarySlaRate" class="text-success">0%</span></span>
+        <!-- Summary Bar Below Table -->
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center py-3 px-3 px-sm-4 gap-2" style="background-color: #090e1a; border-top: 1px solid #22324e;">
+            <div class="d-flex flex-wrap gap-2 gap-sm-3 align-items-center">
+                <span class="text-secondary small fw-bold">ENGINEERS: <span id="summaryStaffCount" class="text-white">0</span></span>
+                <span class="text-secondary small fw-bold d-none d-sm-inline">•</span>
+                <span class="text-secondary small fw-bold">&lt;30M SLA: <span id="summarySlaRate" class="text-success">0%</span></span>
             </div>
             <div class="fs-6 fw-bold text-white">
-                TOTAL RESOLVED CASES: <span id="summaryGrandTotal" class="text-info fs-5 ps-1">0</span>
+                RESOLVED CASES: <span id="summaryGrandTotal" class="text-info fs-5 ps-1">0</span>
             </div>
         </div>
     </div>
@@ -198,11 +259,11 @@
     <div class="card shadow-sm">
         <div class="card-header">3. Team Leadership & Supervision (Page 9)</div>
         <div class="card-body row g-3">
-            <div class="col-md-6">
+            <div class="col-12 col-md-6">
                 <label class="form-label">Primary Lead / Main Supervisor</label>
                 <input type="text" id="mainSuper" class="form-control db-input" value="MAK BUN LEANG">
             </div>
-            <div class="col-md-6">
+            <div class="col-12 col-md-6">
                 <label class="form-label">Standby Lead / Backup Supervisor</label>
                 <input type="text" id="backupSuper" class="form-control db-input" value="POV PUNLORK">
             </div>
@@ -213,35 +274,35 @@
     <div class="card shadow-sm">
         <div class="card-header">4. Workstations & Report Handling (Page 10)</div>
         <div class="card-body row g-3">
-            <div class="col-md-3">
+            <div class="col-12 col-sm-6 col-lg-3">
                 <label class="form-label">HQ01 Station</label>
                 <input type="text" id="hq01" class="form-control db-input" value="MAK BUN LEANG">
             </div>
-            <div class="col-md-3">
+            <div class="col-12 col-sm-6 col-lg-3">
                 <label class="form-label">HQ02 Station</label>
                 <input type="text" id="hq02" class="form-control db-input" value="POV PUNLORK">
             </div>
-            <div class="col-md-3">
+            <div class="col-12 col-sm-6 col-lg-3">
                 <label class="form-label">HQ03 Station</label>
                 <input type="text" id="hq03" class="form-control db-input" value="CHUM SOVANNVISAL">
             </div>
-            <div class="col-md-3">
+            <div class="col-12 col-sm-6 col-lg-3">
                 <label class="form-label">HQ04 Station (Rotating)</label>
                 <input type="text" id="hq04" class="form-control db-input" value="NHEAN P. / OUM S. / I CHHENGKHEANG">
             </div>
-            <div class="col-md-3">
+            <div class="col-12 col-sm-6 col-lg-3">
                 <label class="form-label">SIM Support</label>
                 <input type="text" id="monitoringLead" class="form-control db-input" value="LONG TOKA">
             </div>
-            <div class="col-md-3">
+            <div class="col-12 col-sm-6 col-lg-3">
                 <label class="form-label">AMIS Support</label>
                 <input type="text" id="monitoringBackup" class="form-control db-input" value="KORRY MUHAMMADSOFEK">
             </div>
-            <div class="col-md-3">
+            <div class="col-12 col-sm-6 col-lg-3">
                 <label class="form-label">Backbone Monitoring</label>
                 <input type="text" id="amisReport" class="form-control db-input" value="NHEAN P. / OUM S. / I CHHENGKHEANG">
             </div>
-            <div class="col-md-3">
+            <div class="col-12 col-sm-6 col-lg-3">
                 <label class="form-label">Key Controller</label>
                 <input type="text" id="internalQueue" class="form-control db-input" value="LENG CHANNLY / Team Roster">
             </div>
@@ -252,19 +313,19 @@
     <div class="card shadow-sm">
         <div class="card-header">5. Tool Supports & System Health (Page 6)</div>
         <div class="card-body row g-3">
-            <div class="col-md-3">
+            <div class="col-12 col-sm-6 col-lg-3">
                 <label class="form-label">Portal Support</label>
                 <input type="text" id="toolPortal" class="form-control db-input" value="Helpful & Responsive">
             </div>
-            <div class="col-md-3">
+            <div class="col-12 col-sm-6 col-lg-3">
                 <label class="form-label">AMIS Portal</label>
                 <input type="text" id="toolAmis" class="form-control db-input" value="No Issue">
             </div>
-            <div class="col-md-3">
+            <div class="col-12 col-sm-6 col-lg-3">
                 <label class="form-label">Billing System</label>
                 <input type="text" id="toolBilling" class="form-control db-input" value="No Issue">
             </div>
-            <div class="col-md-3">
+            <div class="col-12 col-sm-6 col-lg-3">
                 <label class="form-label">RT Ticketing</label>
                 <input type="text" id="toolRt" class="form-control db-input" value="No Issue">
             </div>
@@ -303,7 +364,7 @@
             <td><input type="number" class="form-control s-h3 text-center" value="${h3}"></td>
             <td><input type="number" class="form-control s-over3 text-center" value="${over3}"></td>
             <td><span class="row-total fw-bold text-info">${total}</span></td>
-            <td><button class="btn btn-sm btn-danger btn-del">×</button></td>
+            <td><button class="btn btn-sm btn-danger btn-del" style="min-height:36px; min-width:36px;">×</button></td>
         `;
         return tr;
     }
@@ -502,7 +563,7 @@
     document.getElementById('btnExport').addEventListener('click', async function() {
         const btn = document.getElementById('btnExport');
         btn.disabled = true;
-        btn.innerText = 'Generating PPTX...';
+        btn.innerText = 'Generating...';
 
         const payload = getCurrentState();
         payload.staff = payload.staff.filter(s => s.name && s.name.trim() !== '');
