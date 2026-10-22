@@ -7,7 +7,6 @@ from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN
 from pptx.enum.shapes import MSO_SHAPE
 
-# Dynamic template directory resolution
 base_dir = os.path.dirname(os.path.abspath(__file__))
 if os.path.exists(os.path.join(base_dir, "templates")):
     template_dir = os.path.join(base_dir, "templates")
@@ -16,7 +15,6 @@ else:
 
 app = Flask(__name__, template_folder=template_dir)
 
-# Theme Palette
 BLACK      = RGBColor(0, 0, 0)
 NAVY       = RGBColor(15, 23, 42)
 BLUE       = RGBColor(2, 132, 199)
@@ -66,9 +64,9 @@ def add_header(slide, section, title, subtitle=None, tag=None):
         set_run_font(p_t, size=10.5, bold=True, color=BLUE)
 
 def generate_presentation(payload):
-    team_name = payload.get("teamName") or "Team 1"
-    assigned_team = payload.get("assignedTeam") or "Team Alpha"
-    period = payload.get("reportPeriod") or "Week 42 (Current Shift)"
+    team_name = payload.get("teamName", "Team 1").strip() or "Team 1"
+    assigned_team = payload.get("assignedTeam", "Team Alpha").strip() or "Team Alpha"
+    period = payload.get("reportPeriod", "Week 42").strip() or "Week 42"
     critical_incidents = str(payload.get("criticalIncidents", "0"))
     platform = payload.get("platform") or {}
     roles = payload.get("roles") or {}
@@ -100,25 +98,25 @@ def generate_presentation(payload):
     sla_rate = f"{(t30 / grand_total * 100):.1f}%" if grand_total > 0 else "0.0%"
     active_count = len(processed_staff)
 
-    main_super = roles.get("mainSuper") or "MAK BUN LEANG"
-    backup_super = roles.get("backupSuper") or "POV PUNLORK"
-    hq01 = roles.get("hq01") or "MAK BUN LEANG"
-    hq02 = roles.get("hq02") or "POV PUNLORK"
-    hq03 = roles.get("hq03") or "CHUM SOVANNVISAL"
-    hq04 = roles.get("hq04") or "NHEAN P. / OUM S. / I CHHENGKHEANG"
-    mon_lead = roles.get("monitoringLead") or "LONG TOKA"
-    mon_backup = roles.get("monitoringBackup") or "KORRY MUHAMMADSOFEK"
-    amis_rep = roles.get("amisReport") or "NHEAN P. / OUM S. / I CHHENGKHEANG"
-    int_queue = roles.get("internalQueue") or "LENG CHANNLY / Team Roster"
+    # Use exact user string without 'or' overrides (allows clearing/deleting)
+    main_super = roles["mainSuper"].strip() if ("mainSuper" in roles and roles["mainSuper"] is not None) else "MAK BUN LEANG"
+    backup_super = roles["backupSuper"].strip() if ("backupSuper" in roles and roles["backupSuper"] is not None) else "POV PUNLORK"
+    hq01 = roles["hq01"].strip() if ("hq01" in roles and roles["hq01"] is not None) else "MAK BUN LEANG"
+    hq02 = roles["hq02"].strip() if ("hq02" in roles and roles["hq02"] is not None) else "POV PUNLORK"
+    hq03 = roles["hq03"].strip() if ("hq03" in roles and roles["hq03"] is not None) else "CHUM SOVANNVISAL"
+    hq04 = roles["hq04"].strip() if ("hq04" in roles and roles["hq04"] is not None) else "NHEAN P. / OUM S. / I CHHENGKHEANG"
+
+    mon_lead = roles["monitoringLead"].strip() if ("monitoringLead" in roles and roles["monitoringLead"] is not None) else "LONG TOKA"
+    mon_backup = roles["monitoringBackup"].strip() if ("monitoringBackup" in roles and roles["monitoringBackup"] is not None) else "KORRY MUHAMMADSOFEK"
+    amis_rep = roles["amisReport"].strip() if ("amisReport" in roles and roles["amisReport"] is not None) else "NHEAN P. / OUM S. / I CHHENGKHEANG"
+    int_queue = roles["internalQueue"].strip() if ("internalQueue" in roles and roles["internalQueue"] is not None) else "LENG CHANNLY / Team Roster"
 
     prs = Presentation()
     prs.slide_width = Inches(13.333)
     prs.slide_height = Inches(7.5)
     blank = prs.slide_layouts[6]
 
-    # ==========================================
-    # SLIDE 1: Cover Slide
-    # ==========================================
+    # Slide 1: Cover
     s1 = prs.slides.add_slide(blank)
     tb = s1.shapes.add_textbox(Inches(1.0), Inches(1.8), Inches(11.3), Inches(3.0))
     tf = tb.text_frame
@@ -135,9 +133,7 @@ def generate_presentation(payload):
         p_c1 = tf_c.paragraphs[0]; p_c1.text = lbl; set_run_font(p_c1, 10, True, BLUE)
         p_c2 = tf_c.add_paragraph(); p_c2.text = val; set_run_font(p_c2, 14, True, NAVY)
 
-    # ==========================================
-    # SLIDE 2: KPI Overview
-    # ==========================================
+    # Slide 2: KPI Overview
     s2 = prs.slides.add_slide(blank)
     add_header(s2, "SECTION I • Incident Metrics", "Weekly Case Summary Overview", "Key operational performance metrics across customer and internal support queues", f"{assigned_team} Operations")
     kpis = [
@@ -164,15 +160,11 @@ def generate_presentation(payload):
     p_ft2.text = f"• {sla_rate} of total volume ({t30}/{grand_total} cases) resolved in under 30 minutes.\n• Top frontline contributors: {top1} ({top1_c}) and {top2} ({top2_c}) handled {top_share} of total queue."
     set_run_font(p_ft2, 11, False, NAVY)
 
-    # ==========================================
-    # SLIDE 3: Staff KPI Support Cases
-    # ==========================================
+    # Slide 3: Staff KPI Support Cases
     s3 = prs.slides.add_slide(blank)
     add_header(s3, "SECTION I • Individual Throughput", "Staff KPI Support Cases", f"Total Handled: {grand_total} Cases", f"{team_name} Support Roster")
     max_cases = max([s["total"] for s in processed_staff] + [1])
-    y_start = Inches(1.75)
-    row_h = Inches(0.52)
-    row_gap = Inches(0.08)
+    y_start = Inches(1.75); row_h = Inches(0.52); row_gap = Inches(0.08)
 
     for i, s in enumerate(processed_staff[:9]):
         cur_y = y_start + i * (row_h + row_gap)
@@ -194,9 +186,7 @@ def generate_presentation(payload):
         p_c = tb_c.text_frame.paragraphs[0]; p_c.text = f"{s['total']} cases"; p_c.alignment = PP_ALIGN.RIGHT
         set_run_font(p_c, 12, True, BLUE)
 
-    # ==========================================
-    # SLIDE 4: Resolution Turnaround Time
-    # ==========================================
+    # Slide 4: Resolution Time Breakdown
     s4 = prs.slides.add_slide(blank)
     add_header(s4, "SECTION I • Resolution Turnaround Time", "Resolution Time Breakdown by Engineer", None)
     lg_x = Inches(8.3)
@@ -232,21 +222,18 @@ def generate_presentation(payload):
     ft_box = s4.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(6.32), Inches(11.73), Inches(0.68))
     ft_box.fill.solid(); ft_box.fill.fore_color.rgb = LIGHT_CARD; ft_box.line.color.rgb = BORDER
     p_ft = ft_box.text_frame.paragraphs[0]
-    p_ft.text = f"Fast Turnaround: {t30} cases closed <30m. Complex escalations (>3h) concentrated under Lead {main_super} & {top_escalator}.   {sla_rate} SLA Sub-30m"
+    lead_ref = main_super if main_super else "Supervision"
+    p_ft.text = f"Fast Turnaround: {t30} cases closed <30m. Complex escalations (>3h) concentrated under Lead {lead_ref} & {top_escalator}.   {sla_rate} SLA Sub-30m"
     p_ft.alignment = PP_ALIGN.CENTER
     set_run_font(p_ft, 10.5, False, GRAY)
 
-    # ==========================================
-    # SLIDE 5: Staff Knowledge & Ability (ALL RUNS FORCED TO BLACK)
-    # ==========================================
+    # Slide 5: Staff Knowledge & Ability
     s5 = prs.slides.add_slide(blank)
     add_header(s5, "SECTION II • Continuous Training", "Staff Knowledge & Ability", "Core operational capabilities and continuous technical upskilling roadmap", "Scheduled Sessions Active")
-    
     box1 = s5.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(2.0), Inches(5.6), Inches(4.5))
     box1.fill.solid(); box1.fill.fore_color.rgb = LIGHT_CARD; box1.line.color.rgb = BORDER
     tf1 = box1.text_frame; tf1.word_wrap = True
     p = tf1.paragraphs[0]; p.text = "Support Competencies"; set_run_font(p, 16, True, BLACK)
-    
     p = tf1.add_paragraph(); p.text = "• Customer Support: End-to-end client issue resolution."; p.space_before = Pt(14); set_run_font(p, 13, False, BLACK)
     p = tf1.add_paragraph(); p.text = "• Internal Support: Cross-functional technical assistance."; p.space_before = Pt(10); set_run_font(p, 13, False, BLACK)
 
@@ -254,31 +241,26 @@ def generate_presentation(payload):
     box2.fill.solid(); box2.fill.fore_color.rgb = LIGHT_CARD; box2.line.color.rgb = BORDER
     tf2 = box2.text_frame; tf2.word_wrap = True
     p = tf2.paragraphs[0]; p.text = "Upcoming Internal Training"; set_run_font(p, 16, True, BLACK)
-    
     p = tf2.add_paragraph(); p.text = "• Core Network: Internal infrastructure & topology."; p.space_before = Pt(14); set_run_font(p, 13, False, BLACK)
     p = tf2.add_paragraph(); p.text = "• Monitoring Tools: Alerting thresholds & telemetry."; p.space_before = Pt(10); set_run_font(p, 13, False, BLACK)
     p = tf2.add_paragraph(); p.text = "• Products & Services: Solution portfolio updates."; p.space_before = Pt(10); set_run_font(p, 13, False, BLACK)
 
-    # ==========================================
-    # SLIDE 6: Tool Supports & System Health (ALL RUNS FORCED TO BLACK)
-    # ==========================================
+    # Slide 6: Tool Supports & System Health
     s6 = prs.slides.add_slide(blank)
     add_header(s6, "SECTION III • Infrastructure Health", "Tool Supports & System Health", "Operational health status across internal tools, billing pipelines, and support suites", "Weekly Uptime: 100%")
     tools = [
-        ("Portal Support", platform.get("portal") or "Helpful & Responsive", "100% query resolution.", "STABLE"),
-        ("AMIS Portal", platform.get("amis") or "No Issue", "Zero system downtime.", "OPTIMAL"),
-        ("Billing System", platform.get("billing") or "No Issue", "Normal billing processing.", "OPTIMAL"),
-        ("RT Ticketing", platform.get("rt") or "No Issue", "Continuous dispatch flow.", "OPTIMAL")
+        ("Portal Support", platform.get("portal", "Helpful & Responsive").strip() or "-", "100% query resolution.", "STABLE"),
+        ("AMIS Portal", platform.get("amis", "No Issue").strip() or "-", "Zero system downtime.", "OPTIMAL"),
+        ("Billing System", platform.get("billing", "No Issue").strip() or "-", "Normal billing processing.", "OPTIMAL"),
+        ("RT Ticketing", platform.get("rt", "No Issue").strip() or "-", "Continuous dispatch flow.", "OPTIMAL")
     ]
     for i, (name, status, sub, badge_txt) in enumerate(tools):
         box = s6.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8 + i * 2.95), Inches(2.0), Inches(2.8), Inches(4.1))
         box.fill.solid(); box.fill.fore_color.rgb = LIGHT_CARD; box.line.color.rgb = BORDER
         tf = box.text_frame; tf.word_wrap = True
-        
         p = tf.paragraphs[0]; p.text = name; p.alignment = PP_ALIGN.CENTER; set_run_font(p, 16, True, BLACK)
         p = tf.add_paragraph(); p.text = status; p.alignment = PP_ALIGN.CENTER; p.space_before = Pt(14); set_run_font(p, 15, True, BLACK)
         p = tf.add_paragraph(); p.text = sub; p.alignment = PP_ALIGN.CENTER; p.space_before = Pt(8); set_run_font(p, 11, False, BLACK)
-        
         badge = s6.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(1.35 + i * 2.95), Inches(5.4), Inches(1.7), Inches(0.42))
         badge.fill.solid(); badge.fill.fore_color.rgb = WHITE; badge.line.color.rgb = BORDER
         p_b = badge.text_frame.paragraphs[0]; p_b.text = badge_txt; p_b.alignment = PP_ALIGN.CENTER; set_run_font(p_b, 10.5, True, BLACK)
@@ -290,9 +272,7 @@ def generate_presentation(payload):
     p_ft6.alignment = PP_ALIGN.CENTER
     set_run_font(p_ft6, 11, False, GRAY)
 
-    # ==========================================
-    # SLIDE 7: High Capacity Rules
-    # ==========================================
+    # Slide 7: High Capacity Rules
     s7 = prs.slides.add_slide(blank)
     add_header(s7, "SECTION IV • Bandwidth Monitoring", "Upstream & IPLC: High Capacity Rules", "Committed bandwidth trigger rules for high-capacity circuits (≥ 5 Gbps)")
     bw_high = [
@@ -322,9 +302,7 @@ def generate_presentation(payload):
     p_ft7.alignment = PP_ALIGN.CENTER
     set_run_font(p_ft7, 10.5, False, GRAY)
 
-    # ==========================================
-    # SLIDE 8: Links Under 5 Gbps
-    # ==========================================
+    # Slide 8: Links Under 5 Gbps
     s8 = prs.slides.add_slide(blank)
     add_header(s8, "SECTION IV • Bandwidth Alert Rules", "Upstream & IPLC: Links Under 5 Gbps", "Committed bandwidth alert thresholds for secondary uplinks and regional transit")
     sub_links = [
@@ -353,18 +331,15 @@ def generate_presentation(payload):
     p_ft8.alignment = PP_ALIGN.CENTER
     set_run_font(p_ft8, 10.5, False, GRAY)
 
-    # ==========================================
-    # SLIDE 9: Leadership & Supervision (ALL RUNS FORCED TO BLACK)
-    # ==========================================
+    # Slide 9: Leadership & Supervision
     s9 = prs.slides.add_slide(blank)
     add_header(s9, "SECTION V • Leadership & Escalation", f"{team_name}: Senior Team Leader & Supervision", "Escalation path and operational supervision command structure", "24/7 Escalation Active")
-    
     lead1 = s9.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(2.0), Inches(5.6), Inches(4.5))
     lead1.fill.solid(); lead1.fill.fore_color.rgb = LIGHT_CARD; lead1.line.color.rgb = BORDER
     tf_l1 = lead1.text_frame; tf_l1.word_wrap = True
     p = tf_l1.paragraphs[0]; p.text = "PRIMARY LEAD"; set_run_font(p, 11, True, BLACK)
     p = tf_l1.add_paragraph(); p.text = "Main Supervisor"; p.space_before = Pt(4); set_run_font(p, 15, True, BLACK)
-    p = tf_l1.add_paragraph(); p.text = main_super; p.space_before = Pt(6); set_run_font(p, 22, True, BLACK)
+    p = tf_l1.add_paragraph(); p.text = main_super if main_super else "-"; p.space_before = Pt(6); set_run_font(p, 22, True, BLACK)
     p = tf_l1.add_paragraph(); p.text = "Primary operational lead for shift supervision, queue balance, and primary escalations."; p.space_before = Pt(14); set_run_font(p, 12, False, BLACK)
 
     lead2 = s9.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(6.9), Inches(2.0), Inches(5.6), Inches(4.5))
@@ -372,12 +347,10 @@ def generate_presentation(payload):
     tf_l2 = lead2.text_frame; tf_l2.word_wrap = True
     p = tf_l2.paragraphs[0]; p.text = "STANDBY LEAD"; set_run_font(p, 11, True, BLACK)
     p = tf_l2.add_paragraph(); p.text = "Backup Supervisor"; p.space_before = Pt(4); set_run_font(p, 15, True, BLACK)
-    p = tf_l2.add_paragraph(); p.text = backup_super; p.space_before = Pt(6); set_run_font(p, 22, True, BLACK)
+    p = tf_l2.add_paragraph(); p.text = backup_super if backup_super else "-"; p.space_before = Pt(6); set_run_font(p, 22, True, BLACK)
     p = tf_l2.add_paragraph(); p.text = "Standby supervisor to manage queue escalations during supervisor absence or high ticket load."; p.space_before = Pt(14); set_run_font(p, 12, False, BLACK)
 
-    # ==========================================
-    # SLIDE 10: Dispatch Stations & Reports
-    # ==========================================
+    # Slide 10: Dispatch Stations & Reports (Dynamic: Omit Deleted Items Cleanly)
     s10 = prs.slides.add_slide(blank)
     add_header(s10, "SECTION V • Dispatch Stations & Roster", f"{team_name}: Support Role Stations & Daily Reports", "Workstation assignments and daily status reporting distribution", "Daily Rotation Active")
     st1 = s10.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(2.0), Inches(5.6), Inches(4.5))
@@ -385,18 +358,36 @@ def generate_presentation(payload):
     tf_st1 = st1.text_frame; tf_st1.word_wrap = True
     p = tf_st1.paragraphs[0]; p.text = "External Stations (HQ)"; set_run_font(p, 16, True, NAVY)
     p = tf_st1.add_paragraph(); p.text = "Direct client-facing response"; set_run_font(p, 11, False, GRAY)
-    p = tf_st1.add_paragraph(); p.text = f"HQ01: {hq01}\nHQ02: {hq02}\nHQ03: {hq03}\nHQ04: {hq04}\n\nNote: Station HQ04 rotated daily across designated engineers."; p.space_before = Pt(10); set_run_font(p, 12.5, False, NAVY)
+
+    st1_lines = []
+    if hq01: st1_lines.append(f"HQ01: {hq01}")
+    if hq02: st1_lines.append(f"HQ02: {hq02}")
+    if hq03: st1_lines.append(f"HQ03: {hq03}")
+    if hq04: st1_lines.append(f"HQ04: {hq04}")
+    
+    hq_text = "\n".join(st1_lines) if st1_lines else "No stations assigned."
+    p = tf_st1.add_paragraph(); p.space_before = Pt(10)
+    p.text = f"{hq_text}\n\nNote: Station HQ04 rotated daily across designated engineers."
+    set_run_font(p, 12.5, False, NAVY)
 
     st2 = s10.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(6.9), Inches(2.0), Inches(5.6), Inches(4.5))
     st2.fill.solid(); st2.fill.fore_color.rgb = LIGHT_CARD; st2.line.color.rgb = BORDER
     tf_st2 = st2.text_frame; tf_st2.word_wrap = True
     p = tf_st2.paragraphs[0]; p.text = "Internal Support & Reports"; set_run_font(p, 16, True, NAVY)
     p = tf_st2.add_paragraph(); p.text = "Shift monitoring & AMIS handling"; set_run_font(p, 11, False, GRAY)
-    p = tf_st2.add_paragraph(); p.text = f"Monitoring Lead: {mon_lead}\nMonitoring Backup: {mon_backup}\nAMIS Reports: {amis_rep}\nInternal Queue: {int_queue}"; p.space_before = Pt(10); set_run_font(p, 12.5, False, NAVY)
 
-    # ==========================================
-    # SLIDE 11: Action Plan (ALL RUNS FORCED TO BLACK)
-    # ==========================================
+    # Build internal lines dynamically based ONLY on non-empty inputs
+    st2_lines = []
+    if mon_lead: st2_lines.append(f"Monitoring Lead: {mon_lead}")
+    if mon_backup: st2_lines.append(f"Monitoring Backup: {mon_backup}")
+    if amis_rep: st2_lines.append(f"AMIS Reports: {amis_rep}")
+    if int_queue: st2_lines.append(f"Internal Queue: {int_queue}")
+
+    p = tf_st2.add_paragraph(); p.space_before = Pt(10)
+    p.text = "\n".join(st2_lines) if st2_lines else "No internal assignments."
+    set_run_font(p, 12.5, False, NAVY)
+
+    # Slide 11: Action Plan
     s11 = prs.slides.add_slide(blank)
     add_header(s11, "EXECUTIVE SUMMARY • Next Steps", "Action Plan & Strategic Checkpoints", "Key operational achievements and immediate priorities for upcoming cycle")
     actions = [
@@ -408,7 +399,6 @@ def generate_presentation(payload):
         box = s11.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8 + i * 4.0), Inches(2.0), Inches(3.7), Inches(4.1))
         box.fill.solid(); box.fill.fore_color.rgb = LIGHT_CARD; box.line.color.rgb = BORDER
         tf = box.text_frame; tf.word_wrap = True
-        
         p = tf.paragraphs[0]; p.text = title; set_run_font(p, 16, True, BLACK)
         p_desc = tf.add_paragraph(); p_desc.text = desc; p_desc.space_before = Pt(14); set_run_font(p_desc, 12, False, BLACK)
 
@@ -419,9 +409,7 @@ def generate_presentation(payload):
     p_ft11.alignment = PP_ALIGN.CENTER
     set_run_font(p_ft11, 11, False, GRAY)
 
-    # ==========================================
-    # SLIDE 12: Questions & Discussion
-    # ==========================================
+    # Slide 12: Questions & Discussion
     s12 = prs.slides.add_slide(blank)
     tb_q = s12.shapes.add_textbox(Inches(1.0), Inches(2.0), Inches(11.333), Inches(2.2))
     tf_q = tb_q.text_frame; tf_q.word_wrap = True
@@ -429,8 +417,8 @@ def generate_presentation(payload):
     p_sub = tf_q.add_paragraph(); p_sub.text = f"Weekly Case Summary Report • Operations & Network Support {team_name}"; p_sub.alignment = PP_ALIGN.CENTER; set_run_font(p_sub, 15, False, GRAY)
 
     q_data = [
-        ("SUPERVISOR LEAD", main_super),
-        ("BACKUP LEAD", backup_super),
+        ("SUPERVISOR LEAD", main_super if main_super else "-"),
+        ("BACKUP LEAD", backup_super if backup_super else "-"),
         ("ASSIGNED TEAM", f"{assigned_team} ({active_count} Engineers)")
     ]
     for i, (lbl, val) in enumerate(q_data):
