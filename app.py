@@ -1,6 +1,6 @@
 ﻿import io
 import os
-from flask import Flask, render_template, request, send_file, redirect, url_for, session
+from flask import Flask, render_template, request, send_file, redirect, session
 from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
@@ -14,7 +14,7 @@ else:
     template_dir = os.path.abspath(os.path.join(base_dir, "..", "templates"))
 
 app = Flask(__name__, template_folder=template_dir)
-app.secret_key = os.environ.get("SECRET_KEY", "noc-weekly-secure-key-2026")
+app.secret_key = os.environ.get("SECRET_KEY", "noc-weekly-secure-auth-2026")
 
 ADMIN_USERNAME = os.environ.get("NOC_USER", "mkn-noc")
 ADMIN_PASSWORD = os.environ.get("NOC_PASS", "Mkn@123456")
@@ -277,7 +277,7 @@ def generate_presentation(payload):
 
     # Slide 7: High Capacity Rules
     s7 = prs.slides.add_slide(blank)
-    add_header(s7, "SECTION IV • Bandwidth Monitoring", "Upstream & IPLC: High Capacity Rules", "Committed bandwidth trigger rules for high-capacity circuits (≥ 5 Gbps)")
+    add_header(s7, "SECTION IV • Bandwidth Monitoring", "Upstream & IPLC: High Capacity Rules", "Committed bandwidth trigger rules for high-capacity circuits")
     bw_high = [
         ["Carrier / Circuit", "Link Type", "Alert Trigger Threshold", "Trigger Logic"],
         ["IPLC Viettel", "IPLC Circuit", "Traffic over 20 Gbps", "Alert Over Committed"],
@@ -307,7 +307,7 @@ def generate_presentation(payload):
 
     # Slide 8: Links Under 5 Gbps
     s8 = prs.slides.add_slide(blank)
-    add_header(s8, "SECTION IV • Bandwidth Alert Rules", "Upstream & IPLC: Links Under 5 Gbps", "Committed bandwidth alert thresholds for secondary uplinks and regional transit")
+    add_header(s8, "SECTION IV • Bandwidth Alert Rules", "Upstream & IPLC: Links Under Burt", "Committed bandwidth alert thresholds for secondary uplinks and regional transit")
     sub_links = [
         ("Telia (Arelion)", "> 3 Gbps"),
         ("NTT", "> 2 Gbps"),
@@ -436,11 +436,7 @@ def generate_presentation(payload):
     filename = f"Weekly_Report_{team_name.replace(' ', '_')}.pptx"
     return send_file(output, as_attachment=True, download_name=filename, mimetype="application/vnd.openxmlformats-officedocument.presentationml.presentation")
 
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if session.get("logged_in"):
-        return redirect("/")
-    
+def handle_login():
     error = None
     if request.method == "POST":
         user = request.form.get("username", "").strip()
@@ -449,29 +445,38 @@ def login():
             session["logged_in"] = True
             session["user"] = user
             return redirect("/")
-        else:
-            error = "Invalid username or password"
-            
+        error = "Invalid username or password"
     return render_template("login.html", error=error)
 
 @app.route("/logout")
 def logout():
     session.clear()
-    return redirect("/login")
+    return redirect("/")
 
 @app.route("/", defaults={"path": ""}, methods=["GET", "POST"])
 @app.route("/<path:path>", methods=["GET", "POST"])
 def catch_all(path):
-    if not session.get("logged_in"):
-        if request.method == "POST":
-            return {"error": "Unauthorized"}, 401
-        return redirect("/login")
+    orig = (request.headers.get("x-matched-path") or request.headers.get("x-forwarded-uri") or request.path or "").lower()
+    
+    if "logout" in orig or path.lower().endswith("logout"):
+        return logout()
 
-    if request.method == "POST" or "export" in path:
-        payload = request.get_json(silent=True) or {}
-        return generate_presentation(payload)
-        
-    return render_template("index.html")
+    # If already logged in
+    if session.get("logged_in"):
+        if "login" in orig or path.lower().endswith("login"):
+            return redirect("/")
+        if request.method == "POST" or "export" in path:
+            payload = request.get_json(silent=True) or {}
+            return generate_presentation(payload)
+        return render_template("index.html")
+
+    # Not logged in: handle login submission or directly render login page (ZERO 302 redirects)
+    if request.method == "POST":
+        if request.form.get("username") and request.form.get("password"):
+            return handle_login()
+        return {"error": "Unauthorized"}, 401
+
+    return handle_login()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
