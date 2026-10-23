@@ -16,8 +16,8 @@ else:
 app = Flask(__name__, template_folder=template_dir)
 app.secret_key = os.environ.get("SECRET_KEY", "noc-weekly-secure-auth-2026")
 
-ADMIN_USERNAME = os.environ.get("NOC_USER", "mkn-noc")
-ADMIN_PASSWORD = os.environ.get("NOC_PASS", "Mkn@123456")
+ADMIN_USERNAME = os.environ.get("NOC_USER", "admin")
+ADMIN_PASSWORD = os.environ.get("NOC_PASS", "noc@123")
 
 BLACK      = RGBColor(0, 0, 0)
 NAVY       = RGBColor(15, 23, 42)
@@ -77,7 +77,7 @@ def generate_presentation(payload):
 
     raw_staff = payload.get("staff") or []
     processed_staff = []
-    t30 = t1 = t2 = t3 = tover = 0
+    t30 = t1 = t2 = t3 = tover = tamis = temail = 0
 
     for s in raw_staff:
         name = s.get("name", "").strip()
@@ -88,15 +88,25 @@ def generate_presentation(payload):
         h2 = int(s.get("h2", 0))
         h3 = int(s.get("h3", 0))
         over3 = int(s.get("over3", 0))
+        amis = int(s.get("amis", 0))
+        email = int(s.get("email", 0))
+        
+        sla_total = m30 + h1 + h2 + h3 + over3
         tot = s.get("total")
-        total = int(tot) if tot is not None else (m30 + h1 + h2 + h3 + over3)
+        total = int(tot) if tot is not None else (sla_total + amis + email)
+        
         t30 += m30; t1 += h1; t2 += h2; t3 += h3; tover += over3
+        tamis += amis; temail += email
+        
         processed_staff.append({
             "name": name,
             "m30": m30, "h1": h1, "h2": h2, "h3": h3, "over3": over3,
+            "amis": amis, "email": email,
+            "sla_total": sla_total,
             "total": total
         })
 
+    # Sort engineers by overall total cases handled
     processed_staff.sort(key=lambda x: x["total"], reverse=True)
     grand_total = sum(s["total"] for s in processed_staff) if processed_staff else 0
     sla_rate = f"{(t30 / grand_total * 100):.1f}%" if grand_total > 0 else "0.0%"
@@ -163,7 +173,7 @@ def generate_presentation(payload):
     p_ft2.text = f"• {sla_rate} of total volume ({t30}/{grand_total} cases) resolved in under 30 minutes.\n• Top frontline contributors: {top1} ({top1_c}) and {top2} ({top2_c}) handled {top_share} of total queue."
     set_run_font(p_ft2, 11, False, NAVY)
 
-    # Slide 3: Staff KPI Support Cases
+    # Slide 3: Staff KPI Support Cases (INCLUDES SLA + AMIS + EMAIL)
     s3 = prs.slides.add_slide(blank)
     add_header(s3, "SECTION I • Individual Throughput", "Staff KPI Support Cases", f"Total Handled: {grand_total} Cases", f"{team_name} Support Roster")
     max_cases = max([s["total"] for s in processed_staff] + [1])
@@ -189,7 +199,7 @@ def generate_presentation(payload):
         p_c = tb_c.text_frame.paragraphs[0]; p_c.text = f"{s['total']} cases"; p_c.alignment = PP_ALIGN.RIGHT
         set_run_font(p_c, 12, True, BLUE)
 
-    # Slide 4: Resolution Time Breakdown
+    # Slide 4: Resolution Time Breakdown (STRICTLY SLA TURNAROUND TIME)
     s4 = prs.slides.add_slide(blank)
     add_header(s4, "SECTION I • Resolution Turnaround Time", "Resolution Time Breakdown by Engineer", None)
     lg_x = Inches(8.3)
@@ -203,7 +213,8 @@ def generate_presentation(payload):
     chart_bg = s4.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(1.6), Inches(11.73), Inches(4.55))
     chart_bg.fill.solid(); chart_bg.fill.fore_color.rgb = WHITE; chart_bg.line.color.rgb = BORDER
 
-    scale = Inches(7.5) / max_cases
+    max_sla = max([s["sla_total"] for s in processed_staff] + [1])
+    scale = Inches(7.5) / max_sla
     row_step = Inches(4.2 / max(len(processed_staff[:9]), 1))
     for idx, s in enumerate(processed_staff[:9]):
         curr_y = Inches(1.75) + idx * row_step
@@ -218,7 +229,7 @@ def generate_presentation(payload):
                 seg.fill.solid(); seg.fill.fore_color.rgb = clr; seg.line.fill.background()
                 curr_x += seg_w
         tb_tot = s4.shapes.add_textbox(curr_x + Inches(0.12), curr_y - Inches(0.08), Inches(0.6), Inches(0.35))
-        p_tot = tb_tot.text_frame.paragraphs[0]; p_tot.text = str(s["total"])
+        p_tot = tb_tot.text_frame.paragraphs[0]; p_tot.text = str(s["sla_total"])
         set_run_font(p_tot, 10, True, NAVY)
 
     top_escalator = processed_staff[0]["name"] if active_count > 0 else "Lead"
@@ -277,7 +288,7 @@ def generate_presentation(payload):
 
     # Slide 7: High Capacity Rules
     s7 = prs.slides.add_slide(blank)
-    add_header(s7, "SECTION IV • Bandwidth Monitoring", "Upstream & IPLC: High Capacity Rules", "Committed bandwidth trigger rules for high-capacity circuits")
+    add_header(s7, "SECTION IV • Bandwidth Monitoring", "Upstream & IPLC: High Capacity Rules", "Committed bandwidth trigger rules for high-capacity circuits (≥ 5 Gbps)")
     bw_high = [
         ["Carrier / Circuit", "Link Type", "Alert Trigger Threshold", "Trigger Logic"],
         ["IPLC Viettel", "IPLC Circuit", "Traffic over 20 Gbps", "Alert Over Committed"],
@@ -307,7 +318,7 @@ def generate_presentation(payload):
 
     # Slide 8: Links Under 5 Gbps
     s8 = prs.slides.add_slide(blank)
-    add_header(s8, "SECTION IV • Bandwidth Alert Rules", "Upstream & IPLC: Links Under Burt", "Committed bandwidth alert thresholds for secondary uplinks and regional transit")
+    add_header(s8, "SECTION IV • Bandwidth Alert Rules", "Upstream & IPLC: Links Under 5 Gbps", "Committed bandwidth alert thresholds for secondary uplinks and regional transit")
     sub_links = [
         ("Telia (Arelion)", "> 3 Gbps"),
         ("NTT", "> 2 Gbps"),
@@ -461,18 +472,15 @@ def perform_login():
 @app.route("/", defaults={"path": ""}, methods=["GET", "POST"])
 @app.route("/<path:path>", methods=["GET", "POST"])
 def catch_all(path):
-    # 1. Check for logout via query parameter or path
     if request.args.get("action") == "logout" or request.args.get("logout") is not None or "logout" in path.lower():
         return perform_logout()
 
-    # 2. If logged in, handle report generation (POST) or display dashboard (GET)
     if session.get("logged_in"):
         if request.method == "POST" or "export" in path:
             payload = request.get_json(silent=True) or {}
             return generate_presentation(payload)
         return render_template("index.html")
 
-    # 3. Not logged in: process login credentials (POST) or render login page (GET)
     if request.method == "POST":
         if request.form.get("username") and request.form.get("password"):
             return perform_login()

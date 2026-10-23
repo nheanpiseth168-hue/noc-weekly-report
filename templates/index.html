@@ -70,24 +70,24 @@
         .table thead th { 
             background-color: #090e1a !important; 
             color: #38bdf8 !important; 
-            font-size: 0.78rem; 
+            font-size: 0.75rem; 
             font-weight: 700; 
             text-transform: uppercase; 
             border-bottom: 2px solid #22324e !important; 
-            padding: 12px 8px; 
+            padding: 12px 6px; 
             white-space: nowrap;
         }
         .table tbody td { 
             background-color: transparent !important; 
             border-bottom: 1px solid #1e2c44 !important; 
-            padding: 8px 6px; 
+            padding: 8px 5px; 
         }
         .table tfoot td { 
             background-color: #090e1a !important; 
             border-top: 2px solid #0284c7 !important; 
             border-bottom: none !important; 
             font-weight: 700; 
-            padding: 12px 8px; 
+            padding: 12px 6px; 
             white-space: nowrap;
         }
         .badge-total {
@@ -97,13 +97,11 @@
             padding: 4px 10px;
             border-radius: 6px;
         }
-
-        /* Responsive Mobile Specific Rules */
         .table-responsive {
             -webkit-overflow-scrolling: touch;
         }
         #staffTable {
-            min-width: 720px; /* Guarantees table columns won't squeeze on phone screens */
+            min-width: 840px;
         }
         @media (max-width: 768px) {
             .mobile-header-actions {
@@ -150,7 +148,7 @@
 </head>
 <body>
 <div class="container mt-3 mt-md-4">
-    <!-- Top Header (Responsive Stack on Mobile, Row on Desktop) -->
+    <!-- Top Header -->
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-3">
         <div>
             <h2 class="fw-bold text-white mb-1 fs-3 fs-md-2">NOC Weekly Report Generator</h2>
@@ -162,7 +160,7 @@
         </div>
     </div>
 
-    <!-- Database Controls Bar (Grid on Mobile, Row on Desktop) -->
+    <!-- Database Controls Bar -->
     <div class="card p-3 mb-3 shadow-sm">
         <div class="d-flex justify-content-between align-items-center flex-wrap db-controls-row">
             <div class="d-flex align-items-center gap-2">
@@ -179,7 +177,7 @@
         </div>
     </div>
 
-    <!-- 1. Report Overview (Responsive Columns) -->
+    <!-- 1. Report Overview -->
     <div class="card shadow-sm">
         <div class="card-header">1. Report Header & Meta</div>
         <div class="card-body row g-3">
@@ -202,27 +200,29 @@
         </div>
     </div>
 
-    <!-- 2. Staff KPI Breakdown (Responsive Scrollable Table) -->
+    <!-- 2. Staff KPI Breakdown with AMIS & EMAIL Columns -->
     <div class="card shadow-sm">
         <div class="card-header d-flex justify-content-between align-items-center">
             <span>2. Staff Roster & SLA Breakdown</span>
             <button id="btnAddStaff" type="button" class="btn btn-sm btn-outline-secondary">+ Add Engineer</button>
         </div>
         <div class="swipe-hint">
-            ⇄ Swipe horizontally to inspect all SLA columns on mobile/tablet
+            ⇄ Swipe horizontally to inspect all SLA & queue columns on mobile/tablet
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover text-center" id="staffTable">
                     <thead>
                         <tr>
-                            <th class="text-start ps-3" style="width: 28%;">ENGINEER NAME</th>
-                            <th style="width: 12%;">&lt; 30M</th>
-                            <th style="width: 12%;">1H</th>
-                            <th style="width: 12%;">2H</th>
-                            <th style="width: 12%;">3H</th>
-                            <th style="width: 12%;">&gt; 3H</th>
-                            <th style="width: 12%;">TOTAL</th>
+                            <th class="text-start ps-3" style="width: 23%;">ENGINEER NAME</th>
+                            <th style="width: 9%;">&lt; 30M</th>
+                            <th style="width: 8%;">1H</th>
+                            <th style="width: 8%;">2H</th>
+                            <th style="width: 8%;">3H</th>
+                            <th style="width: 8%;">&gt; 3H</th>
+                            <th style="width: 9%; color: #38bdf8;">AMIS</th>
+                            <th style="width: 9%; color: #38bdf8;">EMAIL</th>
+                            <th style="width: 10%;">TOTAL</th>
                             <th style="width: 8%;">ACTION</th>
                         </tr>
                     </thead>
@@ -235,6 +235,8 @@
                             <td id="foot-h2" class="text-warning fw-bold">0</td>
                             <td id="foot-h3" class="text-danger fw-bold">0</td>
                             <td id="foot-over3" class="text-danger fw-bold">0</td>
+                            <td id="foot-amis" class="text-info fw-bold">0</td>
+                            <td id="foot-email" class="text-info fw-bold">0</td>
                             <td><span id="foot-grand" class="badge-total">0</span></td>
                             <td></td>
                         </tr>
@@ -335,15 +337,15 @@
 
 <script>
     const DEFAULT_STAFF = [
-        { name: "LONG TOKA", m30: 26, h1: 2, h2: 1, h3: 0, over3: 0 },
-        { name: "KORRY MUHAMMADSOFEK", m30: 21, h1: 2, h2: 1, h3: 0, over3: 0 },
-        { name: "OUM SENGKRUY", m30: 11, h1: 1, h2: 1, h3: 0, over3: 0 },
-        { name: "POV PUNLORK", m30: 6, h1: 1, h2: 0, h3: 0, over3: 0 },
-        { name: "LENG CHANNLY", m30: 5, h1: 1, h2: 0, h3: 0, over3: 0 },
-        { name: "I CHHENGKHEANG", m30: 4, h1: 0, h2: 1, h3: 0, over3: 1 },
-        { name: "NHEAN PISETH", m30: 4, h1: 0, h2: 0, h3: 0, over3: 0 },
-        { name: "CHUM SOVANNVISAL", m30: 2, h1: 0, h2: 0, h3: 0, over3: 0 },
-        { name: "MAK BUN LEANG", m30: 1, h1: 0, h2: 0, h3: 0, over3: 1 }
+        { name: "LONG TOKA", m30: 27, h1: 2, h2: 1, h3: 0, over3: 0, amis: 0, email: 0 },
+        { name: "KORRY MUHAMMADSOFEK", m30: 21, h1: 2, h2: 1, h3: 0, over3: 0, amis: 0, email: 0 },
+        { name: "OUM SENGKRUY", m30: 11, h1: 1, h2: 1, h3: 0, over3: 0, amis: 0, email: 0 },
+        { name: "POV PUNLORK", m30: 6, h1: 1, h2: 0, h3: 0, over3: 0, amis: 0, email: 0 },
+        { name: "LENG CHANNLY", m30: 5, h1: 1, h2: 0, h3: 0, over3: 0, amis: 0, email: 0 },
+        { name: "I CHHENGKHEANG", m30: 4, h1: 0, h2: 1, h3: 0, over3: 1, amis: 0, email: 0 },
+        { name: "NHEAN PISETH", m30: 4, h1: 0, h2: 0, h3: 0, over3: 0, amis: 0, email: 0 },
+        { name: "CHUM SOVANNVISAL", m30: 2, h1: 0, h2: 0, h3: 0, over3: 0, amis: 0, email: 0 },
+        { name: "MAK BUN LEANG", m30: 1, h1: 0, h2: 0, h3: 0, over3: 1, amis: 0, email: 0 }
     ];
 
     function createStaffRow(data = {}) {
@@ -354,7 +356,9 @@
         const h2 = data.h2 || 0;
         const h3 = data.h3 || 0;
         const over3 = data.over3 || 0;
-        const total = m30 + h1 + h2 + h3 + over3;
+        const amis = data.amis || 0;
+        const email = data.email || 0;
+        const total = m30 + h1 + h2 + h3 + over3 + amis + email;
 
         tr.innerHTML = `
             <td class="ps-3"><input type="text" class="form-control s-name" placeholder="Staff Name" value="${name}"></td>
@@ -363,6 +367,8 @@
             <td><input type="number" class="form-control s-h2 text-center" value="${h2}"></td>
             <td><input type="number" class="form-control s-h3 text-center" value="${h3}"></td>
             <td><input type="number" class="form-control s-over3 text-center" value="${over3}"></td>
+            <td><input type="number" class="form-control s-amis text-center" value="${amis}"></td>
+            <td><input type="number" class="form-control s-email text-center" value="${email}"></td>
             <td><span class="row-total fw-bold text-info">${total}</span></td>
             <td><button class="btn btn-sm btn-danger btn-del" style="min-height:36px; min-width:36px;">×</button></td>
         `;
@@ -370,7 +376,7 @@
     }
 
     function calculateTotals() {
-        let sumM30 = 0, sumH1 = 0, sumH2 = 0, sumH3 = 0, sumOver3 = 0, grandTotal = 0;
+        let sumM30 = 0, sumH1 = 0, sumH2 = 0, sumH3 = 0, sumOver3 = 0, sumAmis = 0, sumEmail = 0, grandTotal = 0;
         const rows = document.querySelectorAll('#staffTbody tr');
         let count = 0;
 
@@ -384,7 +390,9 @@
             const h2 = parseInt(row.querySelector('.s-h2')?.value) || 0;
             const h3 = parseInt(row.querySelector('.s-h3')?.value) || 0;
             const over3 = parseInt(row.querySelector('.s-over3')?.value) || 0;
-            const rowTotal = m30 + h1 + h2 + h3 + over3;
+            const amis = parseInt(row.querySelector('.s-amis')?.value) || 0;
+            const email = parseInt(row.querySelector('.s-email')?.value) || 0;
+            const rowTotal = m30 + h1 + h2 + h3 + over3 + amis + email;
 
             const rowTotEl = row.querySelector('.row-total');
             if (rowTotEl) rowTotEl.innerText = rowTotal;
@@ -394,6 +402,8 @@
             sumH2 += h2;
             sumH3 += h3;
             sumOver3 += over3;
+            sumAmis += amis;
+            sumEmail += email;
             grandTotal += rowTotal;
         });
 
@@ -402,6 +412,8 @@
         document.getElementById('foot-h2').innerText = sumH2;
         document.getElementById('foot-h3').innerText = sumH3;
         document.getElementById('foot-over3').innerText = sumOver3;
+        document.getElementById('foot-amis').innerText = sumAmis;
+        document.getElementById('foot-email').innerText = sumEmail;
         document.getElementById('foot-grand').innerText = grandTotal;
 
         document.getElementById('summaryStaffCount').innerText = count;
@@ -422,7 +434,9 @@
                 h1: parseInt(row.querySelector('.s-h1')?.value) || 0,
                 h2: parseInt(row.querySelector('.s-h2')?.value) || 0,
                 h3: parseInt(row.querySelector('.s-h3')?.value) || 0,
-                over3: parseInt(row.querySelector('.s-over3')?.value) || 0
+                over3: parseInt(row.querySelector('.s-over3')?.value) || 0,
+                amis: parseInt(row.querySelector('.s-amis')?.value) || 0,
+                email: parseInt(row.querySelector('.s-email')?.value) || 0
             });
         });
 
