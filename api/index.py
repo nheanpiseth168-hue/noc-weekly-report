@@ -16,8 +16,8 @@ else:
 app = Flask(__name__, template_folder=template_dir)
 app.secret_key = os.environ.get("SECRET_KEY", "noc-weekly-secure-auth-2026")
 
-ADMIN_USERNAME = os.environ.get("NOC_USER", "admin")
-ADMIN_PASSWORD = os.environ.get("NOC_PASS", "noc@123")
+ADMIN_USERNAME = os.environ.get("NOC_USER", "mkn-noc")
+ADMIN_PASSWORD = os.environ.get("NOC_PASS", "Mkn@123456")
 
 BLACK      = RGBColor(0, 0, 0)
 NAVY       = RGBColor(15, 23, 42)
@@ -288,7 +288,7 @@ def generate_presentation(payload):
 
     # Slide 7: High Capacity Rules
     s7 = prs.slides.add_slide(blank)
-    add_header(s7, "SECTION IV • Bandwidth Monitoring", "Upstream & IPLC: High Capacity Rules", "Committed bandwidth trigger rules for high-capacity circuits (≥ 5 Gbps)")
+    add_header(s7, "SECTION IV • Bandwidth Monitoring", "Upstream & IPLC: High Capacity Rules", "Committed bandwidth trigger rules for high-capacity circuits")
     bw_high = [
         ["Carrier / Circuit", "Link Type", "Alert Trigger Threshold", "Trigger Logic"],
         ["IPLC Viettel", "IPLC Circuit", "Traffic over 20 Gbps", "Alert Over Committed"],
@@ -318,7 +318,7 @@ def generate_presentation(payload):
 
     # Slide 8: Links Under 5 Gbps
     s8 = prs.slides.add_slide(blank)
-    add_header(s8, "SECTION IV • Bandwidth Alert Rules", "Upstream & IPLC: Links Under 5 Gbps", "Committed bandwidth alert thresholds for secondary uplinks and regional transit")
+    add_header(s8, "SECTION IV • Bandwidth Alert Rules", "Upstream & IPLC: Links Under Burt", "Committed bandwidth alert thresholds for secondary uplinks and regional transit")
     sub_links = [
         ("Telia (Arelion)", "> 3 Gbps"),
         ("NTT", "> 2 Gbps"),
