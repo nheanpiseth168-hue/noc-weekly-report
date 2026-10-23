@@ -16,8 +16,8 @@ else:
 app = Flask(__name__, template_folder=template_dir)
 app.secret_key = os.environ.get("SECRET_KEY", "noc-weekly-secure-auth-2026")
 
-ADMIN_USERNAME = os.environ.get("NOC_USER", "mkn-noc")
-ADMIN_PASSWORD = os.environ.get("NOC_PASS", "Mkn@123456")
+ADMIN_USERNAME = os.environ.get("NOC_USER", "admin")
+ADMIN_PASSWORD = os.environ.get("NOC_PASS", "noc@123")
 
 BLACK      = RGBColor(0, 0, 0)
 NAVY       = RGBColor(15, 23, 42)
@@ -106,8 +106,6 @@ def generate_presentation(payload):
             "total": total
         })
 
-    # Sort engineers by overall total cases handled
-    processed_staff.sort(key=lambda x: x["total"], reverse=True)
     grand_total = sum(s["total"] for s in processed_staff) if processed_staff else 0
     sla_rate = f"{(t30 / grand_total * 100):.1f}%" if grand_total > 0 else "0.0%"
     active_count = len(processed_staff)
@@ -162,24 +160,25 @@ def generate_presentation(payload):
         p = tf.add_paragraph(); p.text = title; p.alignment = PP_ALIGN.CENTER; set_run_font(p, 16, True, NAVY)
         p = tf.add_paragraph(); p.text = sub; p.alignment = PP_ALIGN.CENTER; set_run_font(p, 12, False, GRAY)
 
+    staff_slide3 = sorted(processed_staff, key=lambda x: x["total"], reverse=True)
     ft_s2 = s2.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(5.85), Inches(11.73), Inches(0.95))
     ft_s2.fill.solid(); ft_s2.fill.fore_color.rgb = LIGHT_CARD; ft_s2.line.color.rgb = BORDER
-    top1 = processed_staff[0]["name"] if active_count > 0 else "Staff"
-    top1_c = processed_staff[0]["total"] if active_count > 0 else 0
-    top2 = processed_staff[1]["name"] if active_count > 1 else "Staff"
-    top2_c = processed_staff[1]["total"] if active_count > 1 else 0
+    top1 = staff_slide3[0]["name"] if active_count > 0 else "Staff"
+    top1_c = staff_slide3[0]["total"] if active_count > 0 else 0
+    top2 = staff_slide3[1]["name"] if active_count > 1 else "Staff"
+    top2_c = staff_slide3[1]["total"] if active_count > 1 else 0
     top_share = f"{((top1_c + top2_c) / grand_total * 100):.0f}%" if grand_total > 0 else "0%"
     p_ft2 = ft_s2.text_frame.paragraphs[0]
     p_ft2.text = f"• {sla_rate} of total volume ({t30}/{grand_total} cases) resolved in under 30 minutes.\n• Top frontline contributors: {top1} ({top1_c}) and {top2} ({top2_c}) handled {top_share} of total queue."
     set_run_font(p_ft2, 11, False, NAVY)
 
-    # Slide 3: Staff KPI Support Cases (INCLUDES SLA + AMIS + EMAIL)
+    # Slide 3: Staff KPI Support Cases (Throughput: SLA + AMIS + EMAIL)
     s3 = prs.slides.add_slide(blank)
     add_header(s3, "SECTION I • Individual Throughput", "Staff KPI Support Cases", f"Total Handled: {grand_total} Cases", f"{team_name} Support Roster")
-    max_cases = max([s["total"] for s in processed_staff] + [1])
+    max_cases = max([s["total"] for s in staff_slide3] + [1])
     y_start = Inches(1.75); row_h = Inches(0.52); row_gap = Inches(0.08)
 
-    for i, s in enumerate(processed_staff[:9]):
+    for i, s in enumerate(staff_slide3[:9]):
         cur_y = y_start + i * (row_h + row_gap)
         row_card = s3.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), cur_y, Inches(11.73), row_h)
         row_card.fill.solid(); row_card.fill.fore_color.rgb = LIGHT_CARD; row_card.line.color.rgb = BORDER
@@ -199,9 +198,13 @@ def generate_presentation(payload):
         p_c = tb_c.text_frame.paragraphs[0]; p_c.text = f"{s['total']} cases"; p_c.alignment = PP_ALIGN.RIGHT
         set_run_font(p_c, 12, True, BLUE)
 
-    # Slide 4: Resolution Time Breakdown (STRICTLY SLA TURNAROUND TIME)
+    # -------------------------------------------------------------
+    # Slide 4: CORRECTED STRUCTURE (Resolution Time Breakdown by Engineer)
+    # -------------------------------------------------------------
     s4 = prs.slides.add_slide(blank)
-    add_header(s4, "SECTION I • Resolution Turnaround Time", "Resolution Time Breakdown by Engineer", None)
+    add_header(s4, "SECTION I • RESOLUTION TURNAROUND TIME", "Resolution Time Breakdown by Engineer", None)
+    
+    # 1. Legend at Top Right
     lg_x = Inches(8.3)
     for lbl, clr in [("< 30mn", CLR_30M), ("1H", CLR_1H), ("2H", CLR_2H), ("3H", CLR_3H), ("Over 3H", CLR_OVER3)]:
         sq = s4.shapes.add_shape(MSO_SHAPE.RECTANGLE, lg_x, Inches(1.15), Inches(0.16), Inches(0.16))
@@ -210,34 +213,60 @@ def generate_presentation(payload):
         p_lg = tb_lg.text_frame.paragraphs[0]; p_lg.text = lbl; set_run_font(p_lg, 9.5, True, GRAY)
         lg_x += Inches(0.95)
 
-    chart_bg = s4.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(1.6), Inches(11.73), Inches(4.55))
+    # 2. Main White Container Card (Correct bounds: Top 1.60", Bottom 6.25")
+    chart_bg = s4.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(1.60), Inches(11.73), Inches(4.65))
     chart_bg.fill.solid(); chart_bg.fill.fore_color.rgb = WHITE; chart_bg.line.color.rgb = BORDER
 
-    max_sla = max([s["sla_total"] for s in processed_staff] + [1])
-    scale = Inches(7.5) / max_sla
-    row_step = Inches(4.2 / max(len(processed_staff[:9]), 1))
-    for idx, s in enumerate(processed_staff[:9]):
-        curr_y = Inches(1.75) + idx * row_step
-        tb_name = s4.shapes.add_textbox(Inches(0.9), curr_y - Inches(0.08), Inches(2.4), Inches(0.35))
-        p_name = tb_name.text_frame.paragraphs[0]; p_name.text = s["name"]; p_name.alignment = PP_ALIGN.RIGHT
-        set_run_font(p_name, 9.5, True, NAVY)
-        curr_x = Inches(3.4)
-        for count, clr in [(s["m30"], CLR_30M), (s["h1"], CLR_1H), (s["h2"], CLR_2H), (s["h3"], CLR_3H), (s["over3"], CLR_OVER3)]:
+    # 3. Independent Sort: Highest SLA on top, low counts stay at the bottom
+    staff_slide4 = sorted(processed_staff, key=lambda x: x["sla_total"], reverse=True)
+    num_rows = min(len(staff_slide4), 9)
+    max_sla = max([s["sla_total"] for s in staff_slide4[:num_rows]] + [1])
+    scale = Inches(6.8) / max_sla
+    row_step = Inches(4.2 / max(num_rows, 1))
+
+    # 4. Render All Rows Safely Inside Container Card
+    for idx, s in enumerate(staff_slide4[:num_rows]):
+        curr_y = Inches(1.82) + idx * row_step
+        
+        # Engineer Name (Aligned to Inches 3.4)
+        tb_name = s4.shapes.add_textbox(Inches(0.9), curr_y - Inches(0.06), Inches(2.5), Inches(0.35))
+        p_name = tb_name.text_frame.paragraphs[0]
+        p_name.text = s["name"]
+        p_name.alignment = PP_ALIGN.RIGHT
+        set_run_font(p_name, 10, True, NAVY)
+        
+        # Stacked SLA Segments
+        curr_x = Inches(3.6)
+        bar_h = Inches(0.22)
+        segments = [
+            (s["m30"], CLR_30M),
+            (s["h1"], CLR_1H),
+            (s["h2"], CLR_2H),
+            (s["h3"], CLR_3H),
+            (s["over3"], CLR_OVER3)
+        ]
+        for count, clr in segments:
             if count > 0:
                 seg_w = count * scale
-                seg = s4.shapes.add_shape(MSO_SHAPE.RECTANGLE, curr_x, curr_y, seg_w, Inches(0.20))
-                seg.fill.solid(); seg.fill.fore_color.rgb = clr; seg.line.fill.background()
+                seg = s4.shapes.add_shape(MSO_SHAPE.RECTANGLE, curr_x, curr_y, seg_w, bar_h)
+                seg.fill.solid()
+                seg.fill.fore_color.rgb = clr
+                seg.line.fill.background()
                 curr_x += seg_w
-        tb_tot = s4.shapes.add_textbox(curr_x + Inches(0.12), curr_y - Inches(0.08), Inches(0.6), Inches(0.35))
-        p_tot = tb_tot.text_frame.paragraphs[0]; p_tot.text = str(s["sla_total"])
+        
+        # Total SLA Cases Count
+        tb_tot = s4.shapes.add_textbox(curr_x + Inches(0.12), curr_y - Inches(0.06), Inches(0.8), Inches(0.35))
+        p_tot = tb_tot.text_frame.paragraphs[0]
+        p_tot.text = str(s["sla_total"])
         set_run_font(p_tot, 10, True, NAVY)
 
-    top_escalator = processed_staff[0]["name"] if active_count > 0 else "Lead"
-    ft_box = s4.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(6.32), Inches(11.73), Inches(0.68))
+    # 5. Footer Summary Bar Below Card
+    top_sla_engineer = staff_slide4[0]["name"] if staff_slide4 else "Lead"
+    ft_box = s4.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(6.38), Inches(11.73), Inches(0.65))
     ft_box.fill.solid(); ft_box.fill.fore_color.rgb = LIGHT_CARD; ft_box.line.color.rgb = BORDER
     p_ft = ft_box.text_frame.paragraphs[0]
     lead_ref = main_super if main_super else "Supervision"
-    p_ft.text = f"Fast Turnaround: {t30} cases closed <30m. Complex escalations (>3h) concentrated under Lead {lead_ref} & {top_escalator}.   {sla_rate} SLA Sub-30m"
+    p_ft.text = f"Fast Turnaround: {t30} cases closed <30m. Complex escalations (>3h) concentrated under Lead {lead_ref} & {top_sla_engineer}.   {sla_rate} SLA Sub-30m"
     p_ft.alignment = PP_ALIGN.CENTER
     set_run_font(p_ft, 10.5, False, GRAY)
 
@@ -288,7 +317,7 @@ def generate_presentation(payload):
 
     # Slide 7: High Capacity Rules
     s7 = prs.slides.add_slide(blank)
-    add_header(s7, "SECTION IV • Bandwidth Monitoring", "Upstream & IPLC: High Capacity Rules", "Committed bandwidth trigger rules for high-capacity circuits")
+    add_header(s7, "SECTION IV • Bandwidth Monitoring", "Upstream & IPLC: High Capacity Rules", "Committed bandwidth trigger rules for high-capacity circuits (≥ 5 Gbps)")
     bw_high = [
         ["Carrier / Circuit", "Link Type", "Alert Trigger Threshold", "Trigger Logic"],
         ["IPLC Viettel", "IPLC Circuit", "Traffic over 20 Gbps", "Alert Over Committed"],
@@ -318,7 +347,7 @@ def generate_presentation(payload):
 
     # Slide 8: Links Under 5 Gbps
     s8 = prs.slides.add_slide(blank)
-    add_header(s8, "SECTION IV • Bandwidth Alert Rules", "Upstream & IPLC: Links Under Burt", "Committed bandwidth alert thresholds for secondary uplinks and regional transit")
+    add_header(s8, "SECTION IV • Bandwidth Alert Rules", "Upstream & IPLC: Links Under 5 Gbps", "Committed bandwidth alert thresholds for secondary uplinks and regional transit")
     sub_links = [
         ("Telia (Arelion)", "> 3 Gbps"),
         ("NTT", "> 2 Gbps"),
